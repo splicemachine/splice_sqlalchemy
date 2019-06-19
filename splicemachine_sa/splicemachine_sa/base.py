@@ -623,7 +623,8 @@ class _SelectLastRowIDMixin(object):
             if self._select_lastrowid:
                 self._last_column_name = seq_column.key.upper()
                 print("Last Column Name: " + self._last_column_name)
-                self._last_table = tbl.schema + "." + tbl.name
+                schema = tbl.schema if tbl.schema else 'SPLICE'
+                self._last_table = schema + "." + tbl.name
                 print("Last Table: " + self._last_table)
 
     def _get_last_id(self):
