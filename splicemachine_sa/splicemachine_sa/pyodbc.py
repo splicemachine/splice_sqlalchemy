@@ -7,7 +7,9 @@ class SpliceMachineExecutionContext_pyodbc(_SelectLastRowIDMixin, SpliceMachineE
     pass
 
 class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
-
+    """
+    ODBC dialect for Splice Machine SQLAlchemy Driver
+    """
     supports_unicode_statements = True
     supports_char_length = True
     supports_native_decimal = False

@@ -8,6 +8,9 @@ import codecs
 from sys import version_info
 
 class CoerceUnicode(sa_types.TypeDecorator):
+    """
+    Coerce a given type to unicode
+    """
     impl = sa_types.Unicode
 
     def process_bind_param(self, value, dialect):
@@ -16,23 +19,41 @@ class CoerceUnicode(sa_types.TypeDecorator):
         return value
 
 class BaseReflector(object):
+    """
+    Standard functions for Splice Machine
+    SQL Reflector
+    """
     def __init__(self, dialect):
-        self.dialect = dialect
-        self.ischema_names = dialect.ischema_names
-        self.identifier_preparer = dialect.identifier_preparer
+        """
+        :param dialect: current SQL Dialect (splice sql)
+        """
+        self.dialect = dialect # splice SQL
+        self.ischema_names = dialect.ischema_names # supported data types
+        self.identifier_preparer = dialect.identifier_preparer # formatting
 
-        self.default_schema_id = None
+        self.default_schema_id = None # default schema (SPLICE)
 
     def normalize_name(self, name):
+        """
+        Normalize the given name (table, column, schema etc)
+        :param name: the name to normalize
+        :returns: normalized name
+        """
         if isinstance(name, str):
             name = name
         if name != None:
-            return name.lower() if name.upper() == name and \
-               not self.identifier_preparer._requires_quotes(name.lower()) \
+            return name.upper() if name.lower() == name and \
+               not self.identifier_preparer._requires_quotes(name.upper()) \
                else name
         return name
 
     def denormalize_name(self, name):
+        """
+        Denormalize a given name (put back quotes
+        etc.)
+        :param name: the name of the entity
+        :returns: denormalized name
+        """
         if name is None:
             return None
         elif name.lower() == name and \
@@ -51,31 +72,39 @@ class BaseReflector(object):
         return name
 
     def _get_default_schema_name(self, connection):
-        """Return: current setting of the schema attribute"""
-         # default_schema_name = connection.execute(
-         #           u'SELECT CURRENT_SCHEMA FROM SYSIBM.SYSDUMMY1').scalar()
-        return 'SPLICE'
+        """
+        Get the default schema name
+        :param connection: ODBC cnxn to Splice
+        Return: current setting of the schema attribute
+        """
+        return 'SPLICE' # our default schema is SPLICE
 
     @property
     def default_schema_name(self):
+        """
+        Getter for default schema name
+        """
         return self.dialect.default_schema_name
 
 class SMReflector(BaseReflector):
     ischema = MetaData()
 
-    # Internal Splice Machine Table Schemas
+    #### Internal Splice Machine Table Schemas ####
 
+    # SYS.SYSSCHEMAS
     sys_schemas = Table("SYSSCHEMAS", ischema,
       Column("SCHEMAID", CoerceUnicode, key="schemaid"),
       Column("SCHEMANAME", CoerceUnicode, key="schemaname"),
       schema="SYS")
 
+    # SYS.SYSTABLES
     sys_tables = Table("SYSTABLES", ischema,
       Column("SCHEMAID", CoerceUnicode, key="schemaid"),
       Column("TABLE_NAME", CoerceUnicode, key="tablename"),
       Column("TABLE_TYPE", CoerceUnicode, key="tabletype"),
       schema="SYS")
 
+    # SYSVW.SYSTABLESVIEW
     sys_tables_view = Table("SYSTABLESVIEW", ischema,
       Column("TABLEID", CoerceUnicode, key="tableid"),
       Column("TABLENAME", CoerceUnicode, key="tablename"),
@@ -84,12 +113,14 @@ class SMReflector(BaseReflector):
       Column("SCHEMANAME", CoerceUnicode, key="schemaname"),
       schema="SYSVW")
 
+    # SYS.SYSVIEWS
     sys_views = Table("SYSVIEWS", ischema,
       Column("TABLEID", CoerceUnicode, key="viewschema"),
       Column("VIEWDEFINITION", CoerceUnicode, key="viewdefinition"),
       Column("COMPILATIONSCHEMAID", CoerceUnicode, key="compilationschemaid"),
       schema="SYS")
 
+    # SYS.SYSSEQUENCES
     sys_sequences = Table("SYSSEQUENCES", ischema,
       Column("SEQUENCENAME", CoerceUnicode, key="sequencename"),
       Column("SEQUENCESCHEMAID", CoerceUnicode, key="sequenceschemaid"),
@@ -99,55 +130,68 @@ class SMReflector(BaseReflector):
         """
         Returns the schema id associated with a specified
         schema from Splice Machine DB
+        :param schemaName: the name of the schema to get the id for
+        :param connection: ODBC connection to database
+        :returns: schema id if schema exists, else none
         """
         schema_id_query = sql.select([self.sys_schemas.c.schemaid],
-            self.sys_schemas.schemaname == schemaName)
+            self.sys_schemas.schemaname == schemaName) 
+        # sqlalchemy query
         c = connection.execute(schema_id_query)
         if c.first():
-            print("Schema ID: " + str(c.first()))
-            return c.first()[0]
+            return c.first()[0] # exists
         else:
-            return None
+            return None # doesn't exist
     
     def get_schema_id_or_default(self, schemaName, connection):
         """
         Returns default schema id if schemaName is none,
         otherwise, returns the schema id for the specified 
         schemaName
+        :param schemaName: schemaName to retrieve id
+        :param connection: ODBC connection to Splice
+        :returns: schema id or default schema if schema is not specified, else schema id
         """
         if schemaName:
-            schema = schemaName.upper()
+            schema = schemaName.upper() # != None
         else:
-            schema = self.default_schema_name.upper()
+            schema = self.default_schema_name.upper() # == null
         
-        return self.get_schema_id(schema, connection)
+        return self.get_schema_id(schema, connection) # get schema id
     
     def has_table(self, connection, table_name, schema=None):
         """
         Return if table exists in DB
+        :param connection: ODBC cnxn
+        :param table_name: table name to check if exists
+        :param schema: schema of the table
+        :returns: whether or not table exists
         """
-        t = time.time()
         current_schema = self.denormalize_name(
-            schema or self.default_schema_name)
+            schema or self.default_schema_name) # get uppercase for tables
         table_name = self.denormalize_name(table_name)
         if current_schema:
             whereclause = sql.and_(self.sys_tables_view.c.schemaname == current_schema,
                                    self.sys_tables_view.c.tablename == table_name)
+            # filter tables
         else:
             whereclause = self.sys_tables_view.c.tablename == table_name
-        s = sql.select([self.sys_tables_view.c.tablename], whereclause)
-        c = connection.execute(s)
+        c = connection.execute(sql.select([self.sys_tables_view.c.tablename], whereclause))
+        # execute sql over odbc
         out = c.first() is not None
-        print("Function has table ran in {} ms".format((time.time() - t) * 1000))
+
         return out
 
     def has_sequence(self, connection, sequence_name, schema=None):
         """
         Returns if sequence exists in DB
+        :param connection: ODBC cnxn
+        :param sequence_name: the sequence name to check existance of
+        :param schema: the schema of the sequence
+        :returns: wehter or not schema exists
         """
-        print("has sequence " + sequence_name)
         schema_id = self.get_schema_id_or_default(schema, connection)
-
+        # get schema id for the sequence
         current_schema = self.denormalize_name(schema or self.default_schema_name)
         sequence_name = self.denormalize_name(sequence_name)
         if current_schema:
@@ -155,19 +199,20 @@ class SMReflector(BaseReflector):
                                    self.sys_sequences.c.sequencename == sequence_name)
         else:
             whereclause = self.sys_sequences.c.sequencename == sequence_name
-        s = sql.select([self.sys_sequences.c.sequencename], whereclause)
+        s = sql.select([self.sys_sequences.c.sequencename], whereclause) # execute sql
         c = connection.execute(s)
         return c.first() is not None
 
     def get_schema_names(self, connection, **kw):
         """
         Get schema names in DB 
+        :param connection: ODBC cnxn
         """
         sysschema = self.sys_schemas
         query = sql.select([sysschema.c.schemaname],
             sql.not_(sysschema.c.schemaname.like('SYS%')),
             order_by=[sysschema.c.schemaname]
-        )
+        ) # get all tables except SYS tables
         return [self.normalize_name(r[0]) for r in connection.execute(query)]
 
 
@@ -175,25 +220,31 @@ class SMReflector(BaseReflector):
     def get_table_names(self, connection, schema=None, **kw):
         """
         Get table names in DB
+        :param connection: ODBC cnxn
+        :param schema: schema to look under
+        :returns: list of all tables under schema
         """
-        print("Get table names: " + str(schema))
-        schema_id = self.get_schema_id_or_default(schema, connection)
+        schema_id = self.get_schema_id_or_default(schema, connection) # get schema id
         current_schema = self.denormalize_name(schema or self.default_schema_name)
         systbl = self.sys_tables
         query = sql.select([systbl.c.tablename]).\
                     where(systbl.c.tabletype == 'T').\
                     where(systbl.c.schemaid == schema_id).\
-                    order_by(systbl.c.tablename)
+                    order_by(systbl.c.tablename) # sql query to get table names
         return [self.normalize_name(r[0]) for r in connection.execute(query)]
 
     def get_table_name(self, connection, tableid):
         """
-        Get name of a table given its ID
+        Get name of a table given its ID (utility func)
+        :param connection: ODBC cnxn
+        :param tableid: the id of the table to retrieve name for
+        :returns: the name of the table for the given table id
         """
         query = sql.select([self.sys_tables.tablename]).where(
               self.sys_tables.tableid == tableid)
 
-        result = connection.execute(query).first()
+        result = connection.execute(query).first() # execute SQL
+
         if result:
             return result[0]
         return None
@@ -201,11 +252,14 @@ class SMReflector(BaseReflector):
     def get_table_id(self, connection, tablename):
         """
         Get ID of table given its name
+        :param connection: ODBC connection to db
+        :param tablename: table to get id for
+        :returns: id for table given
         """
         query = sql.select([self.sys_tables.tableid]).where(
               self.sys_tables.tablename == tablename)
-
-        result = connection.execute(query).first()
+        # select to get table id
+        result = connection.execute(query).first() # execute SQL
         if result:
             return result[0]
         return None
@@ -214,25 +268,24 @@ class SMReflector(BaseReflector):
     def get_view_names(self, connection, schema=None, **kw):
         """
         Get the names of all views under the specified schema
-        #FIXME :: This would be much simpler if we could figure out
-        joins in sql level SQLAlchemy
+        :param connection: ODBC cnxn
+        :param schema: schema to get views from
+        :returns: list of views under schema
         """
-        print("Get view names: " + str(schema))
         schemaid = self.get_schema_id_or_default(schema, connection)
-
+        # get schema id for views
         current_schema = self.denormalize_name(schema or self.default_schema_name)
 
         query = sql.select([self.sys_views.c.tableid]).\
             where(self.sys_views.c.compilationschemaid == schemaid)
 
-        tableids = connection.execute(query)
-        print("Table IDS: " + str(tableids))
+        viewids = connection.execute(query)
 
         out = []
-        for tableid in tableids:
-            table_name = self.get_table_name(connection, tableid[0])
-            if table_name:
-              out.append(table_name)
+        for viewid in viewids: # get all view names under schema
+            view_name = self.get_table_name(connection, tableid[0]) # same func
+            if view_name:
+              out.append(view_name)
 
         return [self.normalize_name(r[0]) for r in out]
 
@@ -240,62 +293,76 @@ class SMReflector(BaseReflector):
     def get_view_definition(self, connection, viewname, schema=None, **kw):
         """
         Get definition of a view from its name
+        :param connection: ODBC cnxn
+        :param viewname: name of view to get
+        :param schema: the name of the schema for view retrieval
+        :returns: definition of the view
         """
-        print("getting view definition: " + str(schema) + "." + str(viewname))
         schemaid = self.get_schema_id_or_default(schema, connection)
-
+        # get schema id
         current_schema = self.denormalize_name(schema or self.default_schema_name)
         viewname = self.denormalize_name(viewname)
         tableid = self.get_table_id(connecton, viewname)
         query = sql.select([self.sys_views.c.viewdefinition]).\
             where(self.sys_views.c.compilationschemaid == schemaid).\
             where(self.sys_views.c.tableid == tableid)
-
+        # get view definition
         return connection.execute(query).scalar()
 
     def get_columns_from_db(connection, schema, table, col_indices=[]):
         """
-        Temporary workaround for getting column information
-        from database. We must specify datatype=odbc or we
-        will receive a segmentation fault by trying to get a
-        java object
+        Utility func to call stored procedure to get columns list 
+        :param connection: ODBC cnxn
+        :param schema: table schema for cols
+        :param table: table which has the columns to extract
+        :param col_indices: the indexes of the response 
+            to extract, serially
         """
         query = "CALL SYSIBM.SQLCOLUMNS(null, '{schema}', \
             '{table}', null, 'DATATYPE'='ODBC')"
 
 
         results = []
-        for res in connection.execute(query):
+        for res in connection.execute(query): # get all value @ indices in col_indices order
             results.append([res[ci] for ci in col_indices])
 
         return results
 
     @reflection.cache
     def get_columns(self, connection, table_name, schema=None, **kw):
-        print("Get columns: " + str(schema) + "." + str(table_name))
+        """
+        Get all columns for a given table
+        :param connection: ODBC cnxn
+        :param table_name: the name of the table which has columns
+        :param schema: the schema for the table
+        :returns: list of columns from db with associated metadata
+        """
         current_schema = self.denormalize_name(schema or self.default_schema_name)
         table_name = self.denormalize_name(table_name)
 
-        INDICES = [3, 5, 12, 10, 6, 8, 22, 23]
+        INDICES = [3, 5, 12, 10, 6, 8, 22, 23] # these are the indexes in our table
+        # which correspond to the ones in IBM DB2
         column_data = self.get_columns_from_db(connection, current_schema, table,
-            col_indices=INDICES)
+            col_indices=INDICES) # call SYSIBM.SQLCOLUMNS
 
-        sa_columns = []
+        sa_columns = [] 
         for r in column_data:
-            coltype = r[1].upper()
+            coltype = r[1].upper() # extract column type
             if coltype in ['DECIMAL', 'NUMERIC']:
-                coltype = self.ischema_names.get(coltype)(int(r[4]), int(r[5]))
+                coltype = self.ischema_names.get(coltype)(int(r[4]), int(r[5])) # extract
+                # full name of two argument types e.g. DECIMAL(3,1)
             elif coltype in ['CHARACTER', 'CHAR', 'VARCHAR']:
                 coltype = self.ischema_names.get(coltype)(int(r[4]))
+                # one var types: e.g. VARCHAR(100)
             else:
                 try:
-                    coltype = self.ischema_names[coltype]
+                    coltype = self.ischema_names[coltype] 
                 except KeyError:
                     util.warn("Did not recognize type '%s' of column '%s'" %
                             (coltype, r[0]))
-                    coltype = coltype = sa_types.NULLTYPE
+                    coltype = coltype = sa_types.NULLTYPE # assign no type if not understood
 
-            sa_columns.append({
+            sa_columns.append({ # add column data to array
                     'name': self.normalize_name(r[0]),
                     'type': coltype,
                     'nullable': r[3] == 'YES',
@@ -307,14 +374,25 @@ class SMReflector(BaseReflector):
     def get_primary_keys_from_table(self, connection,schema, table):
         """
         Get list of primary keys from table
+        :param connection: ODBC cnxn
+        :param schema: schema under which table is found
+        :param table: table which you want to find primary keys under
+        :returns: primary key columns
         """
         query = "CALL SYSIBM.SQLPRIMARYKEYS(null, '{schema}', '{table}', null)"
+        # stored procedure to get primary keys
         results = [i[3] for i in list(connection.execute(query))] # get primary keys
         return results
 
     @reflection.cache
     def get_primary_keys(self, connection, table_name, schema=None, **kw):
-        print("Get primary keys: " + str(schema) + "." + str(table))
+        """
+        Get a list of primary keys from a table
+        :param connection: odbc cnxn
+        :param table_name: the table name to extract keys from
+        :param schema: the schema under which table is found
+        :returns: list of primary key columns
+        """
         current_schema = self.denormalize_name(schema or self.default_schema_name)
         table_name = self.denormalize_name(table_name)
 
@@ -324,6 +402,15 @@ class SMReflector(BaseReflector):
 
 
     def get_foreign_keys_from_db(self, connection, schema, table, imported=True):
+        """
+        Get outgoing and incoming foreign keys in a given table
+        :param connection: ODBC cnxn
+        :param schema: schema under which table can be found
+        :param table: table to get keys from 
+        :param imported: whether or not to get outgoing keys (
+            extract PKs from FKs) or incoming (extract FKs from PKs)
+        :returns: list of foreing keys
+        """
         if imported:
             query = "CALL SYSIBM.SQLFOREIGNKEYS('',null,'','','{schema}','{table}','IMPORTEDKEY=1')"
         else:
@@ -333,15 +420,19 @@ class SMReflector(BaseReflector):
 
     @reflection.cache
     def get_foreign_keys(self, connection, table_name, schema=None, **kw):
-        print("Get foreign keys: " + str(schema) + "." + str(table))
+        """
+        Get outgoing foreign keys from a table
+        :param connection: ODBC cnxn
+        :param table_name: the name of the table to extract keys from
+        :param schema: schema where table is 
+        :returns: list of outgoing columns
+        """
         default_schema = self.default_schema_name
         current_schema = self.denormalize_name(schema or default_schema)
         default_schema = self.normalize_name(default_schema)
         table_name = self.denormalize_name(table_name)
         
         results = self.get_foreign_keys_from_db(connection, current_schema, table_name, imported=False)
-        # fix me
-        print("FK 1 Results: " + str(results))
         fschema = {}
         for r in results:
             if not (r[12]) in fschema:
@@ -366,7 +457,13 @@ class SMReflector(BaseReflector):
 
     @reflection.cache
     def get_incoming_foreign_keys(self, connection, table_name, schema=None, **kw):
-        print("Get foreign (e) keys: " + str(schema) + "." + str(table))
+        """
+        Get incoming foreing keys from a table
+        :param connection: ODBC cnxn
+        :param table_name: the name of the table to extract keys from
+        :param schema: schema where table is 
+        :returns: list of incoming columns
+        """
         default_schema = self.default_schema_name
         current_schema = self.denormalize_name(schema or default_schema)
         default_schema = self.normalize_name(default_schema)

@@ -15,7 +15,17 @@ else:
     from sqlalchemy.engine import result as _result
 
 class _SM_Numeric(sa_types.Numeric):
+    """
+    Splice Machine Numeric Type
+    that overrides original type
+    """
     def result_processor(self, dialect, coltype):
+        """
+        Processing queried numeric types
+        :param dialect: currentdialect:
+        :param coltype: the column type to extract
+        :returns: float value of decimal in db
+        """
         if self.asdecimal:
             return None
         else:
@@ -27,11 +37,16 @@ class SpliceMachineExecutionContext_sm(SpliceMachineExecutionContext):
     _out_parameters = None
 
     def get_lastrowid(self):
+        """
+        Get the last value from a sequence
+        """
         return self.cursor.last_identity_val
 
 
     def pre_exec(self):
-        # if a single execute, check for outparams
+        """
+        ff a single execute, check for outparams
+        """
         if len(self.compiled_parameters) == 1:
             for bindparam in self.compiled.binds.values():
                 if bindparam.isoutparam:
@@ -39,6 +54,10 @@ class SpliceMachineExecutionContext_sm(SpliceMachineExecutionContext):
                     break
                 
     def get_result_proxy(self):
+        """
+        Get results from a SQL Query
+        :returns: the result from the query
+        """
         if self._callproc_result and self._out_parameters:
             if SA_Version < [0, 8]:
                 result = base.ResultProxy(self)
@@ -80,12 +99,20 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
 
     @classmethod
     def dbapi(cls):
-        """ Returns: the underlying DBAPI driver module
+        """ 
+        returns: the underlying DBAPI driver module
         """
         import ibm_db_dbi as module
         return module
 
     def do_execute(self, cursor, statement, parameters, context=None):
+        """
+        Execute a given statement in SQL on our cursor
+        :param cursor: ODBC cursor object (pyODBC)
+        :param statement: SQL Statement to execute
+        :param parameters: parameters for the pyODBC cursor
+        :param context: additional info for query resolving
+        """
         if context and context._out_parameters:
             statement = statement.split('(', 1)[0].split()[1]
             context._callproc_result = cursor.callproc(statement, parameters)
@@ -93,6 +120,11 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
             cursor.execute(statement, parameters)
 
     def _get_server_version_info(self, connection):
+        """
+        Get information about the db server (Splice Machine)
+        from ODBC connection
+        :param connection: ODBC cnxn
+        """
         return connection.connection.server_info()
     
     _isolation_lookup = set(['READ STABILITY','RS', 'UNCOMMITTED READ','UR',
@@ -106,9 +138,19 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
     _isolation_levels_returned = { value : key for key, value in _isolation_levels_cli.items()}
 
     def _get_cli_isolation_levels(self, level):
+        """
+        Get the isolation level
+        :param level: the isolation level to retrieve
+        :returns: the isolation level cli data
+        """
         return _isolation_levels_cli[level]
 
-    def set_isolation_level(self, connection, level):    
+    def set_isolation_level(self, connection, level):  
+        """
+        Set the connection to a given isolation level
+        :param connection: pyODBC connection
+        :param level: the new level to set isolation to
+        """  
         if level is  None:
          level ='CS' 
         else :
@@ -126,7 +168,10 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
 
         
     def get_isolation_level(self, connection):
-                
+        """
+        Get the current isolation level
+        :param connection: pyODBC cnxn to database
+        """
         attrib = SQL_ATTR_TXN_ISOLATION
         res = connection.get_option(attrib)
 
@@ -134,16 +179,31 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
         return val
     
     def reset_isolation_level(self, connection):
+        """
+        Set the isolation level to default 'CS'
+        :param connection: pyODBC connection
+        """
         self.set_isolation_level(connection,'CS')
         
 
-    # Retrieves current schema for the specified connection object
     def _get_default_schema_name(self, connection):
+        """
+        Retrieves current schema for the specified connection object
+        :param connection: ODBC cnxn
+        :returns: current schema (default)
+        """
         return self.normalize_name(connection.connection.get_current_schema())
 
 
-    # Checks if the DB_API driver error indicates an invalid connection
     def is_disconnect(self, ex, connection, cursor):
+        """
+        Checks if the DB_API driver error indicates an invalid connection
+        :param ex: the error message
+        :param connection: active ODBC cnxn
+        :param cursor: active ODBC cursor
+        :returns: whether or not a given exception is a disconnect
+        """
+
         if isinstance(ex, (self.dbapi.ProgrammingError,
                                              self.dbapi.OperationalError)):
             connection_errors = ('Connection is not active', 'connection is no longer active',
