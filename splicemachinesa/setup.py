@@ -7,20 +7,20 @@ import re
 VERSION = "0.0.1"
 
 setup(
-     name='splicemachine_sa',
+     name='splicemachinesa',
      version=VERSION,
      license='Apache License 2.0',
-     description='SQLAlchemy support for Splice Machine RDBMS - Based on IBM DB2 Driver',
+     description='SQLAlchemy support for Splice Machine RDBMS',
      author='IBM Application Development Team, Amrit Baveja',
      author_email='abaveja@splicemachine.com',
      platforms='All',
      install_requires=['sqlalchemy>=0.7.3','ibm_db>=2.0.0'],
-     packages=['splicemachine_sa'],
+     packages=['splicemachinesa'],
      entry_points={
      'sqlalchemy.dialects': [
-                 'splicemachine_sa=splice_machine_sa.splice_machine:SpliceMachineDialect_sm',
-                 'splicemachine_sa.splice_machine=splicemachine_sa.ibm_db:SpliceMachineDialect_sm',
-                 'splicemachine_sa.pyodbc=splicemachine_sa.pyodbc:SpliceMachineDialect_pyodbc',
+                 'splicemachinesa=splicemachinesa.splice_machine:SpliceMachineDialect_sm',
+                 'splicemachinesa.splice_machine=splicemachinesa.splice_machine:SpliceMachineDialect_sm',
+                 'splicemachinesa.pyodbc=splicemachinesa.pyodbc:SpliceMachineDialect_pyodbc',
                 ]
    },
    zip_safe=False,

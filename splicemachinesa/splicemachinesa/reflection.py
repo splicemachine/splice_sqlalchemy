@@ -39,12 +39,6 @@ class BaseReflector(object):
         :param name: the name to normalize
         :returns: normalized name
         """
-        if isinstance(name, str):
-            name = name
-        if name != None:
-            return name.upper() if name.lower() == name and \
-               not self.identifier_preparer._requires_quotes(name.upper()) \
-               else name
         return name
 
     def denormalize_name(self, name):
@@ -54,21 +48,6 @@ class BaseReflector(object):
         :param name: the name of the entity
         :returns: denormalized name
         """
-        if name is None:
-            return None
-        elif name.lower() == name and \
-                not self.identifier_preparer._requires_quotes(name.lower()):
-            name = name.upper()
-        if not self.dialect.supports_unicode_binds:
-            if(isinstance(name, str)):
-                name = name
-            else:
-                name = codecs.decode(name)
-        else:
-            if version_info[0] < 3:
-                name = unicode(name)
-            else:
-                name = str(name)
         return name
 
     def _get_default_schema_name(self, connection):
@@ -91,6 +70,9 @@ class SMReflector(BaseReflector):
 
     #### Internal Splice Machine Table Schemas ####
 
+    SYS_SCHEMA = 'SYS.SYSSCHEMAS'
+    SYS_TABLEVIEW = 'SYSVW.SYSTABLESVIEW'
+    SYS_TABLE = 'SYS.SYSTABLES'
     # SYS.SYSSCHEMAS
     sys_schemas = Table("SYSSCHEMAS", ischema,
       Column("SCHEMAID", CoerceUnicode, key="schemaid"),
@@ -100,8 +82,8 @@ class SMReflector(BaseReflector):
     # SYS.SYSTABLES
     sys_tables = Table("SYSTABLES", ischema,
       Column("SCHEMAID", CoerceUnicode, key="schemaid"),
-      Column("TABLE_NAME", CoerceUnicode, key="tablename"),
-      Column("TABLE_TYPE", CoerceUnicode, key="tabletype"),
+      Column("TABLENAME", CoerceUnicode, key="tablename"),
+      Column("TABLETYPE", CoerceUnicode, key="tabletype"),
       schema="SYS")
 
     # SYSVW.SYSTABLESVIEW
@@ -134,12 +116,18 @@ class SMReflector(BaseReflector):
         :param connection: ODBC connection to database
         :returns: schema id if schema exists, else none
         """
-        schema_id_query = sql.select([self.sys_schemas.c.schemaid],
-            self.sys_schemas.schemaname == schemaName) 
-        # sqlalchemy query
-        c = connection.execute(schema_id_query)
-        if c.first():
-            return c.first()[0] # exists
+        # TODO @amrit: turn this into SQL (saves time)
+        query = """
+        SELECT SCHEMAID FROM
+        {systable} WHERE
+        SCHEMANAME = '{schema}'
+        """.format(systable=self.SYS_SCHEMA, schema=schemaName)
+
+        print(query)
+        # SQL Query
+        out = connection.execute(query).first()
+        if out:
+            return out[0] # exists
         else:
             return None # doesn't exist
     
@@ -156,7 +144,7 @@ class SMReflector(BaseReflector):
             schema = schemaName.upper() # != None
         else:
             schema = self.default_schema_name.upper() # == null
-        
+        print("Schema ID OR DEFAULT: schema is " + str(schema))
         return self.get_schema_id(schema, connection) # get schema id
     
     def has_table(self, connection, table_name, schema=None):
@@ -167,16 +155,22 @@ class SMReflector(BaseReflector):
         :param schema: schema of the table
         :returns: whether or not table exists
         """
+       
         current_schema = self.denormalize_name(
             schema or self.default_schema_name) # get uppercase for tables
         table_name = self.denormalize_name(table_name)
-        if current_schema:
-            whereclause = sql.and_(self.sys_tables_view.c.schemaname == current_schema,
-                                   self.sys_tables_view.c.tablename == table_name)
-            # filter tables
-        else:
-            whereclause = self.sys_tables_view.c.tablename == table_name
-        c = connection.execute(sql.select([self.sys_tables_view.c.tablename], whereclause))
+
+        query = """
+        SELECT TABLENAME FROM 
+        {systable} WHERE
+        SCHEMANAME = '{schema}' AND
+        TABLENAME = '{table}'
+        """.format(systable=self.SYS_TABLEVIEW, schema=current_schema,
+            table=table_name)
+
+        print(query)
+        # TODO @amrit: TURN THIS INTO SQL FOR FASTER EXECUTION w/o ORM
+        c = connection.execute(query)
         # execute sql over odbc
         out = c.first() is not None
 
@@ -217,21 +211,31 @@ class SMReflector(BaseReflector):
 
 
     @reflection.cache
-    def get_table_names(self, connection, schema=None, **kw):
+    def get_table_names(self, connection, schema=None, lowercase=True, **kw):
         """
         Get table names in DB
         :param connection: ODBC cnxn
         :param schema: schema to look under
+        :param lowercase: MLFlow requires that
+            table names are returned in lowercase,
+            so even though they are stored in Splice Machine
+            uppercase, we will convert them to lowercase
+            by default
         :returns: list of all tables under schema
         """
+
         schema_id = self.get_schema_id_or_default(schema, connection) # get schema id
-        current_schema = self.denormalize_name(schema or self.default_schema_name)
-        systbl = self.sys_tables
-        query = sql.select([systbl.c.tablename]).\
-                    where(systbl.c.tabletype == 'T').\
-                    where(systbl.c.schemaid == schema_id).\
-                    order_by(systbl.c.tablename) # sql query to get table names
-        return [self.normalize_name(r[0]) for r in connection.execute(query)]
+        print("Schema ID is " + str(schema_id))
+
+        query = """
+        SELECT TABLENAME FROM {systable}
+        WHERE TABLETYPE='T' AND 
+        SCHEMAID='{schemaid}'
+        """.format(systable=self.SYS_TABLE, schemaid=schema_id)
+
+        out = connection.execute(query)
+        tables = [self.normalize_name(r[0]) for r in connection.execute(query)]
+        return map(lambda tbl: tbl.lower(), tables) if lowercase else tables
 
     def get_table_name(self, connection, tableid):
         """

@@ -479,7 +479,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             return ' WITH RS USE AND KEEP SHARE LOCKS'
         else:
             return '' # no clause
-			
+            
     def visit_mod_binary(self, binary, operator, **kw):
         """
         Modulo operator with binary numbers
@@ -707,6 +707,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             include_table=include_table, **kwargs).upper()
         return out
 
+
 ########################################
 #                                      #
 #     Splice Machine DDL Compiler      #
@@ -769,7 +770,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
             util.warn(
                 "Splice Machine does not support UPDATE CASCADE for foreign keys.")
 
-        return text
+        return text.upper()
 
     def visit_drop_constraint(self, drop, **kw):
         """
@@ -806,7 +807,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                                 (qual, const)
         return "ALTER TABLE %s DROP %s%s" % \
                                 (self.preparer.format_table(constraint.table),
-                                qual, const) # get command
+                                qual, const).upper() # get command
                 
     def create_table_constraints(self, table, **kw):
         """
@@ -832,7 +833,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                         index.unique = True
                         index.uConstraint_as_index = True
         result = super( SpliceMachineDDLCompiler, self ).create_table_constraints(table, **kw) # call original
-        return result
+        return result.upper()
     
     def visit_create_index(self, create, include_schema=True, include_table_schema=True):
         """
@@ -845,7 +846,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         sql = super( SpliceMachineDDLCompiler, self ).visit_create_index(create, include_schema, include_table_schema)
         if getattr(create.element, 'uConstraint_as_index', None):
             sql += ' EXCLUDE NULL KEYS'
-        return sql
+        return sql.upper()
 
     def visit_add_constraint(self, create):
         """
@@ -870,8 +871,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                     sql = self.visit_create_index(sa_schema.CreateIndex(index))  # create index for constraint
                     return sql
         sql = super( SpliceMachineDDLCompiler, self ).visit_add_constraint(create)
-        return sql
-
+        return sql.upper()
 
 ########################################
 #                                      #
@@ -1031,7 +1031,7 @@ class _SelectLastRowIDMixin(object):
 class SpliceMachineDialect(default.DefaultDialect):
 
     ##### DATABASE OPTIONS #####
-    name = 'splicemachine_sa'
+    name = 'splicemachinesa'
     max_identifier_length = 128
     encoding = 'utf-8'
     default_paramstyle = 'qmark'
