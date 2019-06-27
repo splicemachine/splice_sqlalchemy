@@ -123,7 +123,6 @@ class SMReflector(BaseReflector):
         SCHEMANAME = '{schema}'
         """.format(systable=self.SYS_SCHEMA, schema=schemaName)
 
-        print(query)
         # SQL Query
         out = connection.execute(query).first()
         if out:
@@ -166,7 +165,7 @@ class SMReflector(BaseReflector):
         SCHEMANAME = '{schema}' AND
         TABLENAME = '{table}'
         """.format(systable=self.SYS_TABLEVIEW, schema=current_schema,
-            table=table_name)
+            table=table_name.upper())
 
         print(query)
         # TODO @amrit: TURN THIS INTO SQL FOR FASTER EXECUTION w/o ORM
@@ -187,7 +186,7 @@ class SMReflector(BaseReflector):
         schema_id = self.get_schema_id_or_default(schema, connection)
         # get schema id for the sequence
         current_schema = self.denormalize_name(schema or self.default_schema_name)
-        sequence_name = self.denormalize_name(sequence_name)
+        sequence_name = self.denormalize_name(sequence_name).upper()
         if current_schema:
             whereclause = sql.and_(self.sys_sequences.c.sequenceschemaid == schema_id,
                                    self.sys_sequences.c.sequencename == sequence_name)
@@ -247,7 +246,7 @@ class SMReflector(BaseReflector):
         query = sql.select([self.sys_tables.tablename]).where(
               self.sys_tables.tableid == tableid)
 
-        result = connection.execute(query).first() # execute SQL
+        result = connection.execute(query).first().upper() # execute SQL
 
         if result:
             return result[0]
@@ -383,7 +382,7 @@ class SMReflector(BaseReflector):
         :param table: table which you want to find primary keys under
         :returns: primary key columns
         """
-        query = "CALL SYSIBM.SQLPRIMARYKEYS(null, '{schema}', '{table}', null)"
+        query = "CALL SYSIBM.SQLPRIMARYKEYS(null,'{schema}','{table}',null)"
         # stored procedure to get primary keys
         results = [i[3] for i in list(connection.execute(query))] # get primary keys
         return results
@@ -418,7 +417,7 @@ class SMReflector(BaseReflector):
         if imported:
             query = "CALL SYSIBM.SQLFOREIGNKEYS('',null,'','','{schema}','{table}','IMPORTEDKEY=1')"
         else:
-            query = "CALL SYSIBM.SQLFOREIGNKEYS('','{schema}','{table}','',null,'','EXPORTEDKEY=1'"
+            query = "CALL SYSIBM.SQLFOREIGNKEYS('','{schema}','{table}','',null,'','EXPORTEDKEY=1')"
 
         return list(connection.execute(query))
 
