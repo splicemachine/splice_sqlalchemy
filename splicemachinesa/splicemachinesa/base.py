@@ -13,7 +13,22 @@ from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER,\
     SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP,\
     VARCHAR, FLOAT
 
-# TODO fix capitalization making all columns upper and queries
+"""
+Copyright 2019 Amrit Baveja
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 
 ########################################
 #                                      #
@@ -169,54 +184,73 @@ class TypeRegexes:
      'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
     # string types
 
-def quote(identifier):
-        """
-        Utility function that takes in
-        a string identifier and returns
-        the string wrapped in quotes
-
-        :param identifier: string to surround
-        :returns: string surrounded with quotes
-        """
-        return '"{identifier}"'.format(identifier=identifier)
-
-def check_and_quote(identifier):
+class QuotationUtilities:
     """
-    Utility function to quote a string
-    if it isn't quoted already
-
-    :param identifier: the string to check+quote
-    :returns: the string quoted if not already
+    Utilities for quotation
     """
-    quotes = ('"', "'")
-    if identifier[0] in quotes and identifier[-1] in quotes:
+    @staticmethod
+    def quote(identifier):
+            """
+            Utility function that takes in
+            a string identifier and returns
+            the string wrapped in quotes
+
+            :param identifier: string to surround
+            :returns: string surrounded with quotes
+            """
+            return '"{identifier}"'.format(identifier=identifier)
+
+    @staticmethod
+    def check_and_quote(identifier):
+        """
+        Utility function to quote a string
+        if it isn't quoted already
+
+        :param identifier: the string to check+quote
+        :returns: the string quoted if not already
+        """
+        quotes = ('"', "'")
+        if identifier[0] in quotes and identifier[-1] in quotes:
+            return identifier
+        return QuotationUtilities.quote(identifier)
+
+    @staticmethod
+    def dequote(identifier):
+        """
+        Remove the quotes from an identifier
+        if they exist
+        :param identifier: the string to remove quotes
+            from beggining and end
+        :returns: dequoted identifier
+        """
+        return identifier.strip('"').strip("'")
+
+    @staticmethod
+    def get_default_type_converter(column_type_string):
+            """
+            Get a function that can convert the default
+            argument of a column to its appropriate type
+            :param column_type_string: string version
+                of column type object
+            """
+            if TypeRegexes.NUM_RX.search(column_type_string):
+                return QuotationUtilities.dequote
+            elif TypeRegexes.STR_RX.search(column_type_string):
+                return QuotationUtilities.check_and_quote
+            else:
+                raise Exception("Invalid Column Type: " + str(column_type_string))
+
+    @staticmethod
+    def conditionally_reserved_quote(identifier):
+        """
+        Quote an identifier if it appears inside
+        the reserved words array
+        :param identifier: the identifier to check + quote
+        :returns: the string quoted if it is reserved
+        """
+        if constants.RESERVED_WORDS_REGEX.match(identifier):
+            return QuotationUtilities.check_and_quote(identifier)
         return identifier
-    return quote(identifier)
-
-def dequote(identifier):
-    """
-    Remove the quotes from an identifier
-    if they exist
-    :param identifier: the string to remove quotes
-        from beggining and end
-    :returns: dequoted identifier
-    """
-    return identifier.strip('"').strip("'")
-
-def get_default_type_converter(column_type_string):
-        """
-        Get a function that can convert the default
-        argument of a column to its appropriate type
-        :param column_type_string: string version
-            of column type object
-        """
-        if TypeRegexes.NUM_RX.search(column_type_string):
-            return dequote
-        elif TypeRegexes.STR_RX.search(column_type_string):
-            return check_and_quote
-        else:
-            raise Exception("Invalid Column Type: " + str(column_type_string))
-
 
 
 ########################################
@@ -555,33 +589,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         else:
             return ""
 
-    def _compose_select_body(self, text, select, inner_columns, froms, byfrom, kwargs):
-        print("Visiting compose select body")
-        print(inner_columns)
-        out = compiler.SQLCompiler._compose_select_body(self, text, select, inner_columns,
-                froms, byfrom, kwargs)
-        print(out)
-        return out
-
-    def _label_select_column(
-        self,
-        select,
-        column,
-        populate_result_map,
-        asfrom,
-        column_clause_args,
-        name=None,
-        within_columns_clause=True,
-    ):
-        """produce labeled columns present in a select()."""
-        print("Visiting Label Select Column: " + str(column))
-        if hasattr(column, 'name'):
-            column.name = column.name.upper()
-        out = compiler.SQLCompiler._label_select_column(self,
-            select, column, populate_result_map, asfrom, column_clause_args,
-            name=name, within_columns_clause=within_columns_clause)
-        print("Out is " + str(out))
-        return out
 
     def visit_select(self, select, **kwargs):
         """
@@ -601,7 +608,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             sql_sec = ""
             sql_sec = " \nFROM %s " % ( sql_split[1] )
 
-            dummyVal = "Z.__db2_"
+            dummyVal = "Z.__SM__"
             sql_pri = ""
 
             # distinct select handling
@@ -652,11 +659,9 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             if limit is not None:
                 sql = '%s "%s" <= %d' % ( sql, __rownum, offset + limit )
             out = ("( %s )" % ( sql, ))
-            print("Select: " + str(out))
             return out
         else:
             # original sql select query if offset is not specified
-            print("Select: " + str(sql_ori))
             return sql_ori
 
 
@@ -676,52 +681,27 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :returns: default from clause
         """
         # DB2 uses SYSIBM.SYSDUMMY1 table for row count
-        return  " FROM SYSIBM.SYSDUMMY1" # unfortunately, table needs to exist...
-    
-    def visit_insert(self, insert_stmt, asfrom=False, **kw):
-        print("Visiting Insert")
-        out = super(SpliceMachineCompiler, self).visit_insert(insert_stmt,
-            asfrom=asfrom, **kw)
-        print("out: " + str(out))
-        print(type(out))
-        return out
-
-    def visit_bindparam(
-        self,
-        bindparam,
-        within_columns_clause=False,
-        literal_binds=False,
-        skip_bind_expression=False,
-        **kwargs
-    ):
-        print("Visiting Bind Param")
-        out = super(SpliceMachineCompiler, self).visit_bindparam(
-        bindparam, within_columns_clause=within_columns_clause,
-        literal_binds=literal_binds, skip_bind_expression=skip_bind_expression,
-        **kwargs)
-        print("Bindparam: " + str(out))
-        return out
-
-    def render_literal_value(self, value, type_):
-        print("Visiting Render literal value bind param")
-        print("Value: " + str(value))
-        print("Type: " + str(type_))
-        out = super(SpliceMachineCompiler, self).render_literal_value(
-            value, type_)
-        print("out: " + str(out))
-        return out
-
-    def construct_params(self, params=None, _group_number=None, _check=True):   
-        print("Constructing Params: " + str(params))
+        return  " FROM SYSIBM.SYSDUMMY1" # which we have too!
+        
+    def construct_params(self, params=None, _group_number=None, _check=True):
+        """
+        Construct parameters for literal binds,
+        and convert unicode values to string values
+        or the database will get messed up (
+        primary keys will not work, db cannot render type etc.)
+        
+        :param params: params for the the renderer
+        :param _group_number: the id for the statement
+        :param _check: whether or not to check for
+            literal/non literal binds
+        """   
         out = super(SpliceMachineCompiler, self).construct_params(
             params=params, _group_number=_group_number, _check=_check
         )
         
         for param in out:
             if isinstance(out[param], str) or isinstance(out[param], unicode):
-                print("Parameter: " + str(out[param]) + " is to be converted to byte str")
                 out[param] = str(out[param])
-        print("Rectified: " + str(out))
         return out
 
 
@@ -863,7 +843,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         """
         output = compiler.DDLCompiler.get_column_default_string(self, column, **kw)
         if output:
-            return get_default_type_converter(str(column.type))(output)
+            return QuotationUtilities.get_default_type_converter(str(column.type))(output)
 
     def get_column_specification(self, column, **kw):
         """
@@ -872,11 +852,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :param column: column object from SQLAlchemy
         :returns: column name, plus is specification (type)
         """
-        print("Getting column spec for column: " + str(column))
         col_spec = [self.preparer.format_column(column)]
         col_spec.append(self.dialect.type_compiler.process(column.type,type_expression=column))
-        print("Column type is: " + str(column.type))
-        print(column.type.__dict__)
         # add SQL Data type to specification, right off the bat
 
         # not nullable
@@ -888,7 +865,6 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         if default is not None:
             col_spec.append('WITH DEFAULT')
             col_spec.append(default)
-            print("Default " + str(default))
 
         # autoincrement identity column
         if column is column.table._autoincrement_column:
@@ -924,7 +900,6 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :returns: drop constraint command in SQL
         """
         constraint = drop.element
-        print(type(constraint))
         if isinstance(constraint, sa_schema.ForeignKeyConstraint):
             # drop foreign key constraints
             qual = "FOREIGN KEY "
@@ -1021,45 +996,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                     sql = self.visit_create_index(sa_schema.CreateIndex(index))  # create index for constraint
                     return sql
         sql = super( SpliceMachineDDLCompiler, self ).visit_add_constraint(create)
-        return sql.upper()
+        return sql
 
-    def visit_primary_key_constraint(self, constraint):
-        """
-        Primary key constraint override: should be capitalized
-        :param constraint: the PK constraint object
-        :returns: capitalized SQL clause
-        """
-        print("Visiting " + str(constraint) + " pk constraint")
-        out = super(SpliceMachineDDLCompiler, self).visit_primary_key_constraint(
-            constraint).upper()
-        print("Out PK C: " + str(out))
-        return out
-
-    def visit_foreign_key_constraint(self, constraint):
-        """
-        Foreign Key constraint override: should be capitalized
-        :param constraint: the FK constraint object
-        :returns: capitalized SQL clause
-        """
-        print("Visiting " + str(constraint) + "  constraint")
-        out = super(SpliceMachineDDLCompiler, self).visit_foreign_key_constraint(
-            constraint).upper()
-        print("Out C C: " + str(out))
-        return out    
-    
-    def visit_create_table(self, create):
-        """
-        Create a new table in Splice Machine,
-        if it doesn't already exist (since
-        we don't support CREATE IF EXISTS)
-        :param create: element to create
-        """
-        print("Visiting create table")
-        #drop = self._drop_table_if_exists(str(create.element)) # table name = create.element
-        out = super(SpliceMachineDDLCompiler, self).visit_create_table(
-                create)
-        print(out)
-        return out
 
 ########################################
 #                                      #
@@ -1072,81 +1010,6 @@ class SpliceMachineIdentifierPreparer(compiler.IdentifierPreparer):
     reserved_words = constants.RESERVED_WORDS
     illegal_initial_characters = set(range(0, 10)).union(["_", "$"])
 
-    def format_constraint(self, constraint):
-        """
-        Override formatting constraint for uppercase
-        :param naming: the naming of the constraint
-        :param constraint: the constraint object
-        :returns capitalized constraint
-        """
-        out = super(SpliceMachineIdentifierPreparer, self).format_constraint(
-            constraint) # capitalize
-        print("Out C: " + str(out))
-        if out:
-            return out.upper()
-        return None
-
-    def format_sequence(self, sequence, use_schema=True):
-        """
-        Override formatting sequence for uppercase
-        :param sequence: the constraint object
-        :param use_schema: whether or not to use a schema
-            prefixing the sequence
-        :returns capitalized sequence
-        """
-        out = super(SpliceMachineIdentifierPreparer, self).format_sequence(self,
-            sequence, use_schema=use_schema).upper() # capitalize
-        print("Out Sq: " + str(out))
-        return out
-
-    def format_column(self, column, use_table=False, 
-        name=None, table_name=None, use_schema=False):
-        """
-        Override super class and capitalize & quote all
-        column names or we can't reference them after.
-        We need to quote them so if reserved words
-        are used in Splice table, they are not interpreted
-        as SQL expressions
-        :param column: the column class from SQLAlchemy
-        :param use_table: keep table in column name
-        :param name: column name (w/o table)
-        :param table_name: name of the table for the column
-        :param use_schema: whether or not to include schema
-            in column name
-        :returns: quoted and capitalized column name
-        """
-        out = super(SpliceMachineIdentifierPreparer, self).format_column(
-            column, use_table=use_table, name=name, table_name=table_name,
-            use_schema=use_schema
-        ).upper() # capitalize
-        print("out c: " + str(out))
-        return out
-
-    def format_table(self, table, use_schema=True, name=None):
-        """
-        Override superclass and capitalize + quote table names
-        :param table: table name
-        :param use_schema: whether or not to include schema in table name
-        :param name: table name
-        :returns: quoted and capitalized table name
-        """
-        out = super(SpliceMachineIdentifierPreparer, self).format_table(
-            table, use_schema=use_schema, name=name
-        ).upper() # capitalize
-        print("Out T: " + str(out))
-        return out
-
-    def format_schema(self, name):
-        """
-        Override superclass and capitalize and quote schema names
-        :param name: schema name
-        :returns: capitalized and quoted schema name
-        """
-        out = super(SpliceMachineIdentifierPreparer, self).format_schema(
-            name
-        ).upper() # capitalize
-        print("Out S: " + str(out))
-        return out
 
 ########################################
 #                                      #
@@ -1205,10 +1068,10 @@ class _SelectLastRowIDMixin(object):
             if self._select_lastrowid:
 
                 schema = tbl.schema if tbl.schema else 'SPLICE' # find schema, else default schema
-                self._last_column_name = seq_column.key.upper()
-                self._last_table = (quote(schema)
-                         + "." + quote(tbl.name)).upper()
-                # we have to quote so we can use reserved words and capitalize
+                self._last_column_name = seq_column.key
+                self._last_table = (QuotationUtilities.conditionally_reserved_quote(schema)
+                         + "." + QuotationUtilities.conditionally_reserved_quote(tbl.name))
+                # we have to quote so we can use reserved words
 
     def _get_last_id(self):
         """
@@ -1222,7 +1085,6 @@ class _SelectLastRowIDMixin(object):
         query = 'SELECT MAX({identity_col}) FROM {table}'.format(
                 identity_col=self._last_column_name, table=self._last_table
         )
-        # get highest id, essentially
         conn._cursor_execute(self.cursor, query, (), self)
         result = self.cursor.fetchall()
         return int(result[0][0])  # fetch results
@@ -1295,7 +1157,7 @@ class SpliceMachineDialect(default.DefaultDialect):
         self.dbms_name = None
         
     def normalize_name(self, name):
-        return self._reflector.normalize_name(name).upper()
+        return self._reflector.normalize_name(name)
 
     def denormalize_name(self, name):
         return self._reflector.denormalize_name(name)

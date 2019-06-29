@@ -7,6 +7,22 @@ import re
 import codecs
 from sys import version_info
 
+"""
+Copyright 2019 Amrit Baveja
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 class CoerceUnicode(sa_types.TypeDecorator):
     """
     Coerce a given type to unicode
@@ -122,7 +138,6 @@ class SMReflector(BaseReflector):
         {systable} WHERE
         SCHEMANAME = '{schema}'
         """.format(systable=self.SYS_SCHEMA, schema=schemaName)
-
         # SQL Query
         out = connection.execute(query).first()
         if out:
@@ -143,7 +158,6 @@ class SMReflector(BaseReflector):
             schema = schemaName.upper() # != None
         else:
             schema = self.default_schema_name.upper() # == null
-        print("Schema ID OR DEFAULT: schema is " + str(schema))
         return self.get_schema_id(schema, connection) # get schema id
     
     def has_table(self, connection, table_name, schema=None):
@@ -166,9 +180,6 @@ class SMReflector(BaseReflector):
         TABLENAME = '{table}'
         """.format(systable=self.SYS_TABLEVIEW, schema=current_schema,
             table=table_name.upper())
-
-        print(query)
-        # TODO @amrit: TURN THIS INTO SQL FOR FASTER EXECUTION w/o ORM
         c = connection.execute(query)
         # execute sql over odbc
         out = c.first() is not None
@@ -224,14 +235,12 @@ class SMReflector(BaseReflector):
         """
 
         schema_id = self.get_schema_id_or_default(schema, connection) # get schema id
-        print("Schema ID is " + str(schema_id))
 
         query = """
         SELECT TABLENAME FROM {systable}
         WHERE TABLETYPE='T' AND 
         SCHEMAID='{schemaid}'
         """.format(systable=self.SYS_TABLE, schemaid=schema_id)
-
         out = connection.execute(query)
         tables = [self.normalize_name(r[0]) for r in connection.execute(query)]
         return map(lambda tbl: tbl.lower(), tables) if lowercase else tables
@@ -473,7 +482,6 @@ class SMReflector(BaseReflector):
         table_name = self.denormalize_name(table_name)
         
         results = self.get_foreign_keys_from_db(connection, current_schema, table_name, imported=True)
-        print("FK 2 Results: " + str(results))
 
         fschema = {}
         for r in results:
