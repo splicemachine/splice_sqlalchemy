@@ -8,7 +8,7 @@ import codecs
 from sys import version_info
 
 """
-Copyright 2019 Amrit Baveja
+Copyright 2019 Splice Machine, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

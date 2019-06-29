@@ -14,7 +14,7 @@ from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER,\
     VARCHAR, FLOAT
 
 """
-Copyright 2019 Amrit Baveja
+Copyright 2019 Splice Machine Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -682,7 +682,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         """
         # DB2 uses SYSIBM.SYSDUMMY1 table for row count
         return  " FROM SYSIBM.SYSDUMMY1" # which we have too!
-        
+
     def construct_params(self, params=None, _group_number=None, _check=True):
         """
         Construct parameters for literal binds,

@@ -4,7 +4,7 @@ from sqlalchemy import __version__ as SA_Version
 from sqlalchemy.exc import ArgumentError
 
 """
-Copyright 2019 Amrit Baveja
+Copyright 2019 Splice Machine Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
