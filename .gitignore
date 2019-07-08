@@ -7,3 +7,5 @@ dist
 .venv
 ibm_db_sa.egg-info/
 .coverage
+.pytest_cache
+.cache

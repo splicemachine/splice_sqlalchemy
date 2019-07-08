@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-import datetime, re, random, traceback
+import datetime, re, traceback, sys
 from sqlalchemy import types as sa_types
 from sqlalchemy import schema as sa_schema
 from sqlalchemy import util
@@ -29,12 +29,63 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+########################################
+#                                      #
+#    Find if Python is Version 3       #
+#                                      #
+########################################
+
+IS_PYTHON_3 = sys.version_info[0] >= 3
 
 ########################################
 #                                      #
 #   Custom Splice Machine Data Types   #
 #                                      #
 ########################################
+
+class _SM_Integer(sa_types.Integer):
+    """
+    Overrided integer data type
+    that makes sure that types passed
+    in are integers before being binded
+    """
+    def bind_processor(self, dialect):
+        """
+        Returns a conversion function
+        that converts input values to
+        Python ints before binding
+        :param dialect: the current dialect
+            in use
+        :returns: conversion function
+        """
+        def process(value):
+            return None if value is None else int(value)
+
+        return process
+
+class _SM_String(sa_types.String):
+    """
+    Overrided String class for 
+    unicode + posix conversions (MLFlow
+    puts these types into SQLAlchemy
+    frequently and they don't render in
+    VARCHAR types properly)
+    """
+    def bind_processor(self, dialect):
+        """
+        Return a conversion function
+        that transforms into
+        Strings
+        :param dialect: the current dialect
+            in use
+        :returns: conversion function
+        """
+        def process(value):
+            print("binding")
+            print(value)
+            return None if value is None else str(value)
+
+        return process
 
 class _SM_Boolean(sa_types.Boolean):
     """
@@ -47,7 +98,7 @@ class _SM_Boolean(sa_types.Boolean):
         Return a conversion function for 
         processing row values
         :param dialect: the current dialect in use
-        :param coltype: the column type parsed
+        :param coltype: the column type in DB Schema
             from pyODBC.connection.cursor.description
 
         :returns: func for parsing boolean value of integer
@@ -69,12 +120,8 @@ class _SM_Boolean(sa_types.Boolean):
         """
 
         def process(value):
-            if value is None:
-                return None # null
-            elif bool(value): 
-                return 1
-            else:
-                return 0
+            return None if value is None else int(bool(value))
+
         return process
 
 class _SM_Date(sa_types.Date):
@@ -88,7 +135,7 @@ class _SM_Date(sa_types.Date):
         Return a conversion function for 
         processing row values
         :param dialect: the current dialect in use
-        :param coltype: the column type parsed
+        :param coltype: the column type in DB Schema
             from pyODBC.connection.cursor.description
 
         :returns: func for parsing datetime value of integer
@@ -111,19 +158,24 @@ class _SM_Date(sa_types.Date):
             string value from datetime when we insert
         """
         def process(value):
+            print('binding')
+            print(type(value))
             if value is None:
                 return None # null
             if isinstance(value, datetime.datetime): # can be parsed?
                 value = datetime.date(value.year, value.month, value.day)
-            return str(value) # stringify
+            out = str(value) # stringify
+            print('binded: '+ out)
+            return out
         return process
 
 # Mapping for our overrided functions to the original ones
 
 colspecs = {
     sa_types.Boolean: _SM_Boolean,
-    sa_types.Date: _SM_Date
-
+    sa_types.Date: _SM_Date,
+    sa_types.String: _SM_String,
+    sa_types.Integer: _SM_Integer
 }
 
 
@@ -248,7 +300,7 @@ class QuotationUtilities:
         :param identifier: the identifier to check + quote
         :returns: the string quoted if it is reserved
         """
-        if constants.RESERVED_WORDS_REGEX.match(identifier):
+        if identifier in constants.RESERVED_WORDS:
             return QuotationUtilities.check_and_quote(identifier)
         return identifier
 
@@ -662,6 +714,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             return out
         else:
             # original sql select query if offset is not specified
+            print(sql_ori)
             return sql_ori
 
 
@@ -700,7 +753,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         )
         
         for param in out:
-            if isinstance(out[param], str) or isinstance(out[param], unicode):
+            if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param])
         return out
 
@@ -870,7 +923,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         if column is column.table._autoincrement_column:
             col_spec.append('GENERATED BY DEFAULT')
             col_spec.append('AS IDENTITY')
-            col_spec.append('(START WITH 0)')
+            col_spec.append('(START WITH 1)')
 
         column_spec = ' '.join(col_spec) # convert to String
         return column_spec
@@ -959,6 +1012,19 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                         index.uConstraint_as_index = True
         result = super( SpliceMachineDDLCompiler, self ).create_table_constraints(table, **kw) # call original
         return result
+
+    def visit_create_table(self, create):
+        try:
+            temporary_index = create.element._prefixes.index('TEMPORARY')
+        except ValueError:
+            temporary_index = -1
+
+        if temporary_index != -1:
+            create.element._prefixes.insert(temporary_index, 'GLOBAL') # we require 
+            # global/local temporary table
+
+        print(create.element._prefixes)
+        return super(SpliceMachineDDLCompiler, self).visit_create_table(create)
     
     def visit_create_index(self, create, include_schema=True, include_table_schema=True):
         """
@@ -1034,7 +1100,6 @@ class SpliceMachineExecutionContext(default.DefaultExecutionContext):
 #     Splice Machine Identity Col      #
 #                                      #
 ########################################
-
 class _SelectLastRowIDMixin(object):
     """
     Used for autoincrementing columns
@@ -1098,7 +1163,6 @@ class _SelectLastRowIDMixin(object):
             row_id = self._get_last_id() # get last seq value
             if row_id is not None:
                 self._lastrowid = row_id
-
 ########################################
 #                                      #
 #     Splice Machine SQL Dialect       #
@@ -1157,10 +1221,10 @@ class SpliceMachineDialect(default.DefaultDialect):
         self.dbms_name = None
         
     def normalize_name(self, name):
-        return self._reflector.normalize_name(name)
+        return self._reflector.capitalize(name)
 
     def denormalize_name(self, name):
-        return self._reflector.denormalize_name(name)
+        return self._reflector.capitalize(name)
 
     def _get_default_schema_name(self, connection):
         return self._reflector._get_default_schema_name(connection)
@@ -1206,8 +1270,4 @@ class SpliceMachineDialect(default.DefaultDialect):
         return self._reflector.get_indexes(
                                 connection, table_name, schema=schema, **kw)
         
-    def get_unique_constraints(self, connection, table_name, schema=None, **kw):
-        return self._reflector.get_unique_constraints(
-                                connection, table_name, schema=schema, **kw)
-
 dialect = SpliceMachineDialect

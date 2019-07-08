@@ -34,7 +34,7 @@ setup(
      packages=['splicemachinesa'],
      entry_points={
      'sqlalchemy.dialects': [
-                 'splicemachinesa=splicemachinesa.splice_machine:SpliceMachineDialect_sm',
+                 'splicemachinesa=splicemachinesa.pyodbc:SpliceMachineDialect_pyodbc',
                  'splicemachinesa.splice_machine=splicemachinesa.splice_machine:SpliceMachineDialect_sm',
                  'splicemachinesa.pyodbc=splicemachinesa.pyodbc:SpliceMachineDialect_pyodbc',
                 ]
