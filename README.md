@@ -5,7 +5,7 @@
 SQLAlchemy applications with Splice Machine
 * SQLAlchemy exposes a uniform API for database-backed applications,
 which can be easily used with Splice Machine via this adaptor
-
+* Supported on Splice Machine Versions >= 2.8.0.1920
 #### Installation:
 ```
 sudo pip install pyodbc sqlalchemy # install dependencies
