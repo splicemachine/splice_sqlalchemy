@@ -1,11 +1,7 @@
-import sys, time
 from sqlalchemy import types as sa_types
-from sqlalchemy import sql, util
-from sqlalchemy import Table, MetaData, Column
+from sqlalchemy import util
+from sqlalchemy import MetaData,
 from sqlalchemy.engine import reflection
-import re
-import codecs
-from sys import version_info
 
 """
 Copyright 2019 Splice Machine, Inc.
@@ -159,17 +155,16 @@ class SMReflector(BaseReflector):
         """
         schema_id = self.get_schema_id_or_default(schema, connection)
         # get schema id for the sequence
-        current_schema = self.capitalize(schema or self.default_schema_name)
         sequence_name = self.capitalize(sequence_name)
 
         query = """
         SELECT SEQUENCENAME FROM 
         {systable} WHERE SEQUENCESSCHEMAID='{schemaid}'
         AND SEQUENCENAME='{sequencename}'
-        """.format(schemaid=schema_id, sequence_name=sequence_name,
+        """.format(schemaid=schema_id, sequencename=sequence_name,
                    systable=self.SYS_SEQUENCES)
 
-        c = connection.execute(s)
+        c = connection.execute(query)
         return c.first() is not None
 
     def get_schema_names(self, connection, **kw):
@@ -184,7 +179,6 @@ class SMReflector(BaseReflector):
         """.format(systable=self.capitalize(self.SYS_SCHEMA))
 
         out = [r[0].lower() for r in connection.execute(query)]
-        print(out)
         return out
 
     @reflection.cache
@@ -209,7 +203,6 @@ class SMReflector(BaseReflector):
         SCHEMAID='{schemaid}'
         """.format(systable=self.capitalize(self.SYS_TABLE), schemaid=schema_id)
 
-        out = connection.execute(query)
         tables = [r[0] for r in connection.execute(query)]
         return [table.lower() for table in tables] if lowercase else tables
 
@@ -223,7 +216,7 @@ class SMReflector(BaseReflector):
         query = """
         SELECT TABLENAME FROM {systable}
         WHERE TABLEID='{tableid}'
-        """.format(systable=self.capitalize(SYS_TABLE), tableid=tableid)
+        """.format(systable=self.capitalize(self.SYS_TABLE), tableid=tableid)
 
         result = connection.execute(query).first().upper()  # execute SQL
 
@@ -248,7 +241,6 @@ class SMReflector(BaseReflector):
         if only_views:
             query += "AND TABLETYPE='V'"
 
-        print(query)
         # select to get table id
         result = connection.execute(query).first()  # execute SQL
         if result:
@@ -263,7 +255,6 @@ class SMReflector(BaseReflector):
         :param schema: schema to get views from
         :returns: list of views under schema
         """
-        schemaid = self.get_schema_id_or_default(schema, connection)
         # get schema id for views
         current_schema = self.capitalize(schema or self.default_schema_name)
 
@@ -274,8 +265,6 @@ class SMReflector(BaseReflector):
         AND  TABLETYPE = 'V'
         """.format(systable=self.SYS_TABLEVIEW, schema=current_schema)
 
-        print(query)
-        out = connection.execute(query)
         tables = [r[0] for r in connection.execute(query)]
         return [table.lower() for table in tables] if lowercase else tables
 
@@ -290,7 +279,6 @@ class SMReflector(BaseReflector):
         """
         schemaid = self.get_schema_id_or_default(schema, connection)
         # get schema id
-        current_schema = self.capitalize(schema or self.default_schema_name)
         viewname = self.capitalize(viewname)
         tableid = self.get_table_id(connection, viewname, schemaid=schemaid, only_views=True)
 
@@ -300,7 +288,6 @@ class SMReflector(BaseReflector):
         """.format(systable=self.SYS_VIEWS,
                    tableid=tableid)
 
-        print(query)
         # get view definition
         return connection.execute(query).scalar()
 
@@ -447,7 +434,6 @@ class SMReflector(BaseReflector):
             else:
                 fschema[r[12]]['constrained_columns'].append(r[7])
                 fschema[r[12]]['referred_columns'].append(r[3])
-        print(fschema)
         return [value for key, value in fschema.items()]
 
     @reflection.cache

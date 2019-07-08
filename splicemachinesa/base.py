@@ -171,14 +171,11 @@ class _SM_Date(sa_types.Date):
         """
 
         def process(value):
-            print('binding')
-            print(type(value))
             if value is None:
                 return None  # null
             if isinstance(value, datetime.datetime):  # can be parsed?
                 value = datetime.date(value.year, value.month, value.day)
             out = str(value)  # stringify
-            print('binded: ' + out)
             return out
 
         return process
@@ -729,7 +726,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             return out
         else:
             # original sql select query if offset is not specified
-            print(sql_ori)
             return sql_ori
 
     def visit_sequence(self, sequence):
@@ -1036,7 +1032,6 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
             create.element._prefixes.insert(temporary_index, 'GLOBAL')  # we require
             # global/local temporary table
 
-        print(create.element._prefixes)
         return super(SpliceMachineDDLCompiler, self).visit_create_table(create)
 
     def visit_create_index(self, create, include_schema=True, include_table_schema=True):
