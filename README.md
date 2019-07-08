@@ -36,3 +36,14 @@ sudo pip install .
 sudo pip install pytest
 py.test -vv .
 ```
+
+#### Features not yet supported
+- Common Table Expressions
+- Indices Reflection
+- Check + Unicode Reflection
+- Nullable Reflection
+- ORDER BY COLLATE
+- Empty Set Insertion
+- Unicode String Support
+- Reflector for Order by Foreign Key
+- limit_offset_in_unions_from_alias
