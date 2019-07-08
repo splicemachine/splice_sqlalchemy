@@ -115,14 +115,6 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
         }
     )
 
-    @classmethod
-    def dbapi(cls):
-        """ 
-        returns: the underlying DBAPI driver module
-        """
-        import ibm_db_dbi as module
-        return module
-
     def do_execute(self, cursor, statement, parameters, context=None):
         """
         Execute a given statement in SQL on our cursor
@@ -145,8 +137,8 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
         """
         return connection.connection.server_info()
 
-    _isolation_lookup = set(['READ STABILITY', 'RS', 'UNCOMMITTED READ', 'UR',
-                             'CURSOR STABILITY', 'CS', 'REPEATABLE READ', 'RR'])
+    _isolation_lookup = {'READ STABILITY', 'RS', 'UNCOMMITTED READ', 'UR', 'CURSOR STABILITY', 'CS', 'REPEATABLE READ',
+                         'RR'}
 
     _isolation_levels_cli = {'RR': SQL_TXN_SERIALIZABLE, 'REPEATABLE READ': SQL_TXN_SERIALIZABLE,
                              'UR': SQL_TXN_READ_UNCOMMITTED, 'UNCOMMITTED READ': SQL_TXN_READ_UNCOMMITTED,

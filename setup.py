@@ -30,7 +30,7 @@ setup(
     author='IBM Application Development Team, Amrit Baveja',
     author_email='abaveja@splicemachine.com',
     platforms='All',
-    install_requires=['sqlalchemy>=0.7.3', 'ibm_db>=2.0.0'],
+    install_requires=['sqlalchemy>=0.7.3'],
     packages=['splicemachinesa'],
     entry_points={
         'sqlalchemy.dialects': [
