@@ -1,6 +1,6 @@
 from sqlalchemy import types as sa_types
 from sqlalchemy import util
-from sqlalchemy import MetaData,
+from sqlalchemy import MetaData
 from sqlalchemy.engine import reflection
 
 """
