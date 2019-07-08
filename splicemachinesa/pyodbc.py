@@ -1,6 +1,4 @@
-from sqlalchemy import util
 from sqlalchemy.connectors.pyodbc import PyODBCConnector
-import urllib
 from .base import _SelectLastRowIDMixin, SpliceMachineExecutionContext, SpliceMachineDialect
 
 """
@@ -19,8 +17,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 class SpliceMachineExecutionContext_pyodbc(_SelectLastRowIDMixin, SpliceMachineExecutionContext):
     pass
+
 
 class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
     """

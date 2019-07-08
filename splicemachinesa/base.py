@@ -1,16 +1,15 @@
 from __future__ import unicode_literals
-import datetime, re, traceback, sys
+import datetime, re, sys
 from sqlalchemy import types as sa_types
 from sqlalchemy import schema as sa_schema
 from sqlalchemy import util
-from sqlalchemy.sql import operators, schema, compiler
+from sqlalchemy.sql import operators, compiler
 from sqlalchemy.engine import default
-from sqlalchemy import __version__ as SA_Version
 from . import reflection as sm_reflection
 from . import constants
 
-from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER,\
-    SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP,\
+from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER, \
+    SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP, \
     VARCHAR, FLOAT
 
 """
@@ -37,6 +36,7 @@ limitations under the License.
 
 IS_PYTHON_3 = sys.version_info[0] >= 3
 
+
 ########################################
 #                                      #
 #   Custom Splice Machine Data Types   #
@@ -49,6 +49,7 @@ class _SM_Integer(sa_types.Integer):
     that makes sure that types passed
     in are integers before being binded
     """
+
     def bind_processor(self, dialect):
         """
         Returns a conversion function
@@ -58,10 +59,12 @@ class _SM_Integer(sa_types.Integer):
             in use
         :returns: conversion function
         """
+
         def process(value):
             return None if value is None else int(value)
 
         return process
+
 
 class _SM_String(sa_types.String):
     """
@@ -71,6 +74,7 @@ class _SM_String(sa_types.String):
     frequently and they don't render in
     VARCHAR types properly)
     """
+
     def bind_processor(self, dialect):
         """
         Return a conversion function
@@ -80,6 +84,7 @@ class _SM_String(sa_types.String):
             in use
         :returns: conversion function
         """
+
         def process(value):
             print("binding")
             print(value)
@@ -87,12 +92,14 @@ class _SM_String(sa_types.String):
 
         return process
 
+
 class _SM_Boolean(sa_types.Boolean):
     """
     An overrided boolean class specifically
     for Splice Machine that converts Boolean
     SQLAlchemy types into TINYINT (0/1) values
     """
+
     def result_processor(self, dialect, coltype):
         """
         Return a conversion function for 
@@ -103,11 +110,13 @@ class _SM_Boolean(sa_types.Boolean):
 
         :returns: func for parsing boolean value of integer
         """
+
         def process(value):
-            if value is None: # null
+            if value is None:  # null
                 return None
-            else: # bool(0) -> false, bool(1) -> true
+            else:  # bool(0) -> false, bool(1) -> true
                 return bool(value)
+
         return process
 
     def bind_processor(self, dialect):
@@ -124,12 +133,14 @@ class _SM_Boolean(sa_types.Boolean):
 
         return process
 
+
 class _SM_Date(sa_types.Date):
     """
     An overrided date class specifically
     for Splice Machine that converts
     datetimes into date objects
     """
+
     def result_processor(self, dialect, coltype):
         """
         Return a conversion function for 
@@ -140,13 +151,15 @@ class _SM_Date(sa_types.Date):
 
         :returns: func for parsing datetime value of integer
         """
+
         def process(value):
             if value is None:
-                return None # null
-            if isinstance(value, datetime.datetime): # convert string
+                return None  # null
+            if isinstance(value, datetime.datetime):  # convert string
                 # datetime to date
                 value = datetime.date(value.year, value.month, value.day)
             return value
+
         return process
 
     def bind_processor(self, dialect):
@@ -157,17 +170,20 @@ class _SM_Date(sa_types.Date):
         :returns: func for getting 
             string value from datetime when we insert
         """
+
         def process(value):
             print('binding')
             print(type(value))
             if value is None:
-                return None # null
-            if isinstance(value, datetime.datetime): # can be parsed?
+                return None  # null
+            if isinstance(value, datetime.datetime):  # can be parsed?
                 value = datetime.date(value.year, value.month, value.day)
-            out = str(value) # stringify
-            print('binded: '+ out)
+            out = str(value)  # stringify
+            print('binded: ' + out)
             return out
+
         return process
+
 
 # Mapping for our overrided functions to the original ones
 
@@ -192,6 +208,7 @@ class DOUBLE(sa_types.Numeric):
     data type i.e. (Integer)
     """
     __visit_name__ = 'DOUBLE'
+
 
 class LONGVARCHAR(sa_types.VARCHAR):
     """
@@ -233,24 +250,26 @@ class TypeRegexes:
     NUM_RX = re.compile('|'.join(['INT', 'DECIMAL', 'NUMERIC', 'REAL', 'DOUBLE', 'FLOAT']))
     # numeric types
     STR_RX = re.compile('|'.join(['BLOB', 'CLOB', 'CHAR', 'CHARACTER', 'DATE', 'DATETIME',
-     'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
+                                  'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
     # string types
+
 
 class QuotationUtilities:
     """
     Utilities for quotation
     """
+
     @staticmethod
     def quote(identifier):
-            """
-            Utility function that takes in
-            a string identifier and returns
-            the string wrapped in quotes
+        """
+        Utility function that takes in
+        a string identifier and returns
+        the string wrapped in quotes
 
-            :param identifier: string to surround
-            :returns: string surrounded with quotes
-            """
-            return '"{identifier}"'.format(identifier=identifier)
+        :param identifier: string to surround
+        :returns: string surrounded with quotes
+        """
+        return '"{identifier}"'.format(identifier=identifier)
 
     @staticmethod
     def check_and_quote(identifier):
@@ -279,18 +298,18 @@ class QuotationUtilities:
 
     @staticmethod
     def get_default_type_converter(column_type_string):
-            """
-            Get a function that can convert the default
-            argument of a column to its appropriate type
-            :param column_type_string: string version
-                of column type object
-            """
-            if TypeRegexes.NUM_RX.search(column_type_string):
-                return QuotationUtilities.dequote
-            elif TypeRegexes.STR_RX.search(column_type_string):
-                return QuotationUtilities.check_and_quote
-            else:
-                raise Exception("Invalid Column Type: " + str(column_type_string))
+        """
+        Get a function that can convert the default
+        argument of a column to its appropriate type
+        :param column_type_string: string version
+            of column type object
+        """
+        if TypeRegexes.NUM_RX.search(column_type_string):
+            return QuotationUtilities.dequote
+        elif TypeRegexes.STR_RX.search(column_type_string):
+            return QuotationUtilities.check_and_quote
+        else:
+            raise Exception("Invalid Column Type: " + str(column_type_string))
 
     @staticmethod
     def conditionally_reserved_quote(identifier):
@@ -395,7 +414,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return "FLOAT" if type_.precision is None else \
-                "FLOAT(%(precision)s)" % {'precision': type_.precision}
+            "FLOAT(%(precision)s)" % {'precision': type_.precision}
         # don't use function precision e.g. FLOAT(3) if no precision
         # is specified
 
@@ -425,7 +444,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return "BLOB(1M)" if type_.length in (None, 0) else \
-                "BLOB(%(length)s)" % {'length': type_.length}
+            "BLOB(%(length)s)" % {'length': type_.length}
         # use function with size if specified
 
     def visit_VARCHAR(self, type_):
@@ -436,7 +455,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return "VARCHAR(500)" if type_.length in (None, 0) else \
-                "VARCHAR(%(length)s)" % {'length': type_.length}
+            "VARCHAR(%(length)s)" % {'length': type_.length}
         # VARCHAR(100) should be default on Splice
 
     def visit_LONGVARCHAR(self, type_):
@@ -456,7 +475,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return "CHAR" if type_.length in (None, 0) else \
-                "CHAR(%(length)s)" % {'length': type_.length}
+            "CHAR(%(length)s)" % {'length': type_.length}
 
     def visit_DECIMAL(self, type_):
         """
@@ -465,14 +484,13 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
-        if not type_.precision: # nothing specified
+        if not type_.precision:  # nothing specified
             return "DECIMAL(31, 0)"
-        elif not type_.scale: # precision but not scale
+        elif not type_.scale:  # precision but not scale
             return "DECIMAL(%(precision)s, 0)" % {'precision': type_.precision}
-        else: # both precision and scale
+        else:  # both precision and scale
             return "DECIMAL(%(precision)s, %(scale)s)" % {
-                            'precision': type_.precision, 'scale': type_.scale}
-
+                'precision': type_.precision, 'scale': type_.scale}
 
     def visit_numeric(self, type_):
         """
@@ -528,7 +546,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
-        return self.visit_SMALLINT(type_) 
+        return self.visit_SMALLINT(type_)
         # boolean are stored as smallints in
         # database
 
@@ -540,7 +558,6 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return self.visit_FLOAT(type_)
-
 
     def visit_string(self, type_):
         """
@@ -583,7 +600,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
     (from sqlalchemy.compiler.SQLCompiler)
     to convert to our SQL
     """
-            
+
     def get_cte_preamble(self, recursive):
         """
         Get the preamble for common
@@ -592,8 +609,8 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             the preamble is recursive
         :returns: preamble
         """
-        return "WITH" # always WITH
-        
+        return "WITH"  # always WITH
+
     def visit_now_func(self, fn, **kw):
         """
         Get the SQL function for getting
@@ -611,13 +628,13 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :returns: clause at the end of select
         "for update"
         """
-        if select.for_update == True: # updatable
+        if select.for_update == True:  # updatable
             return ' WITH RS USE AND KEEP UPDATE LOCKS'
-        elif select.for_update == 'read': # read-only
+        elif select.for_update == 'read':  # read-only
             return ' WITH RS USE AND KEEP SHARE LOCKS'
         else:
-            return '' # no clause
-            
+            return ''  # no clause
+
     def visit_mod_binary(self, binary, operator, **kw):
         """
         Modulo operator with binary numbers
@@ -627,9 +644,9 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             on Splice
         """
         return "mod(%s, %s)" % (self.process(binary.left),
-                                                self.process(binary.right))
+                                self.process(binary.right))
 
-    def limit_clause(self, select,**kwargs):
+    def limit_clause(self, select, **kwargs):
         """
         Generate a LIMIT clause for SQL
         SELECT queries via Fetch First
@@ -637,10 +654,9 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :returns: clause for limit
         """
         if (select._limit is not None) and (select._offset is None):
-            return " FETCH FIRST %s ROWS ONLY" % select._limit # get fetch first
+            return " FETCH FIRST %s ROWS ONLY" % select._limit  # get fetch first
         else:
             return ""
-
 
     def visit_select(self, select, **kwargs):
         """
@@ -649,7 +665,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param select: select query object
         :returns: the correct SQL Select query
         """
-        limit, offset = select._limit, select._offset # extract offset and limit
+        limit, offset = select._limit, select._offset  # extract offset and limit
         # from user arguments in SQLAlchemy class
         sql_ori = compiler.SQLCompiler.visit_select(self, select, **kwargs)
         # call parent function to generate original SQL command
@@ -658,7 +674,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             __rownum = 'Z.__ROWNUM'
             sql_split = re.split("[\s+]FROM ", sql_ori, 1)
             sql_sec = ""
-            sql_sec = " \nFROM %s " % ( sql_split[1] )
+            sql_sec = " \nFROM %s " % (sql_split[1])
 
             dummyVal = "Z.__SM__"
             sql_pri = ""
@@ -669,54 +685,53 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
                 sql_sel = "SELECT DISTINCT "
 
             # Parse built in functions
-            sql_select_token = sql_split[0].split( "," )
+            sql_select_token = sql_split[0].split(",")
             i = 0
-            while ( i < len( sql_select_token ) ):
-                if sql_select_token[i].count( "TIMESTAMP(DATE(SUBSTR(CHAR(" ) == 1:
-                    sql_sel = "%s \"%s%d\"," % ( sql_sel, dummyVal, i + 1 )
+            while (i < len(sql_select_token)):
+                if sql_select_token[i].count("TIMESTAMP(DATE(SUBSTR(CHAR(") == 1:
+                    sql_sel = "%s \"%s%d\"," % (sql_sel, dummyVal, i + 1)
                     sql_pri = '%s %s,%s,%s,%s AS "%s%d",' % (
-                                    sql_pri,
-                                    sql_select_token[i],
-                                    sql_select_token[i + 1],
-                                    sql_select_token[i + 2],
-                                    sql_select_token[i + 3],
-                                    dummyVal, i + 1 )
+                        sql_pri,
+                        sql_select_token[i],
+                        sql_select_token[i + 1],
+                        sql_select_token[i + 2],
+                        sql_select_token[i + 3],
+                        dummyVal, i + 1)
                     i = i + 4
                     continue
 
                 # select them with specific names via AS clause
-                if sql_select_token[i].count( " AS " ) == 1:
-                    temp_col_alias = sql_select_token[i].split( " AS " )
-                    sql_pri = '%s %s,' % ( sql_pri, sql_select_token[i] )
-                    sql_sel = "%s %s," % ( sql_sel, temp_col_alias[1] )
+                if sql_select_token[i].count(" AS ") == 1:
+                    temp_col_alias = sql_select_token[i].split(" AS ")
+                    sql_pri = '%s %s,' % (sql_pri, sql_select_token[i])
+                    sql_sel = "%s %s," % (sql_sel, temp_col_alias[1])
                     i = i + 1
                     continue
 
-                sql_pri = '%s %s AS "%s%d",' % ( sql_pri, sql_select_token[i], dummyVal, i + 1 )
-                sql_sel = "%s \"%s%d\"," % ( sql_sel, dummyVal, i + 1 )
+                sql_pri = '%s %s AS "%s%d",' % (sql_pri, sql_select_token[i], dummyVal, i + 1)
+                sql_sel = "%s \"%s%d\"," % (sql_sel, dummyVal, i + 1)
                 i = i + 1
 
             # Parse SQL Query Partitions
-            sql_pri = sql_pri[:len( sql_pri ) - 1]
-            sql_pri = "%s%s" % ( sql_pri, sql_sec )
-            sql_sel = sql_sel[:len( sql_sel ) - 1]
-            sql = '%s, ( ROW_NUMBER() OVER() ) AS "%s" FROM ( %s ) AS M' % ( sql_sel, __rownum, sql_pri )
-            sql = '%s FROM ( %s ) Z WHERE' % ( sql_sel, sql )
+            sql_pri = sql_pri[:len(sql_pri) - 1]
+            sql_pri = "%s%s" % (sql_pri, sql_sec)
+            sql_sel = sql_sel[:len(sql_sel) - 1]
+            sql = '%s, ( ROW_NUMBER() OVER() ) AS "%s" FROM ( %s ) AS M' % (sql_sel, __rownum, sql_pri)
+            sql = '%s FROM ( %s ) Z WHERE' % (sql_sel, sql)
 
             # Add limits and offsets
             if offset is not 0:
-                sql = '%s "%s" > %d' % ( sql, __rownum, offset )
+                sql = '%s "%s" > %d' % (sql, __rownum, offset)
             if offset is not 0 and limit is not None:
-                sql = '%s AND ' % ( sql )
+                sql = '%s AND ' % (sql)
             if limit is not None:
-                sql = '%s "%s" <= %d' % ( sql, __rownum, offset + limit )
-            out = ("( %s )" % ( sql, ))
+                sql = '%s "%s" <= %d' % (sql, __rownum, offset + limit)
+            out = ("( %s )" % (sql,))
             return out
         else:
             # original sql select query if offset is not specified
             print(sql_ori)
             return sql_ori
-
 
     def visit_sequence(self, sequence):
         """
@@ -734,7 +749,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :returns: default from clause
         """
         # DB2 uses SYSIBM.SYSDUMMY1 table for row count
-        return  " FROM SYSIBM.SYSDUMMY1" # which we have too!
+        return " FROM SYSIBM.SYSDUMMY1"  # which we have too!
 
     def construct_params(self, params=None, _group_number=None, _check=True):
         """
@@ -747,16 +762,15 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param _group_number: the id for the statement
         :param _check: whether or not to check for
             literal/non literal binds
-        """   
+        """
         out = super(SpliceMachineCompiler, self).construct_params(
             params=params, _group_number=_group_number, _check=_check
         )
-        
+
         for param in out:
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param])
         return out
-
 
     def visit_function(self, func, result_map=None, **kwargs):
         """
@@ -765,13 +779,12 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param result_map: whether or not to return results back to user
         :returns: the parsed function
         """
-        if func.name.upper() == "AVG": # average function (needs to be uppercase)
+        if func.name.upper() == "AVG":  # average function (needs to be uppercase)
             return "AVG(DOUBLE(%s))" % (self.function_argspec(func, **kwargs))
-        elif func.name.upper() == "CHAR_LENGTH": # char length function
+        elif func.name.upper() == "CHAR_LENGTH":  # char length function
             return "CHAR_LENGTH(%s, %s)" % (self.function_argspec(func, **kwargs), 'OCTETS')
         else:
-            return compiler.SQLCompiler.visit_function(self, func, **kwargs) # generic
-
+            return compiler.SQLCompiler.visit_function(self, func, **kwargs)  # generic
 
     def visit_cast(self, cast, **kw):
         """
@@ -780,28 +793,28 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param cast: the cast class
         :returns: clause for casting
         """
-        type_ = cast.typeclause.type # get cast type
+        type_ = cast.typeclause.type  # get cast type
 
         if isinstance(type_, (
-                    sa_types.DateTime, sa_types.Date, sa_types.Time,
-                    sa_types.DECIMAL)): # call superclass visit cast (special handling)
+                sa_types.DateTime, sa_types.Date, sa_types.Time,
+                sa_types.DECIMAL)):  # call superclass visit cast (special handling)
             return super(SpliceMachineCompiler, self).visit_cast(cast, **kw)
         else:
-            return self.process(cast.clause) # call generic cast (regular)
+            return self.process(cast.clause)  # call generic cast (regular)
 
-    def get_select_precolumns(self, select,**kwargs):
+    def get_select_precolumns(self, select, **kwargs):
         """
         Handles selecting distinct records
         in a SELECT query
         :param select: select query class
         :returns: clause for distinct queries
         """
-        if isinstance(select._distinct, str): # are we selecting distinctly?
+        if isinstance(select._distinct, str):  # are we selecting distinctly?
             return select._distinct.upper() + " "
         elif select._distinct:
-            return "DISTINCT " # add clause
+            return "DISTINCT "  # add clause
         else:
-            return "" # don't add clause
+            return ""  # don't add clause
 
     def visit_join(self, join, asfrom=False, **kwargs):
         """
@@ -811,11 +824,11 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :returns: join clause
         """
         return ''.join(
-            (self.process(join.left, asfrom=True, **kwargs), # left join
-             (join.isouter and " LEFT OUTER JOIN " or " INNER JOIN "), 
-             self.process(join.right, asfrom=True, **kwargs), # right join
+            (self.process(join.left, asfrom=True, **kwargs),  # left join
+             (join.isouter and " LEFT OUTER JOIN " or " INNER JOIN "),
+             self.process(join.right, asfrom=True, **kwargs),  # right join
              " ON ",
-             self.process(join.onclause, **kwargs))) # what we are joining on
+             self.process(join.onclause, **kwargs)))  # what we are joining on
 
     def visit_savepoint(self, savepoint_stmt):
         """
@@ -823,7 +836,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param savepoint_stmt: the savepoint statement class
         :returns: generated clause
         """
-        return "SAVEPOINT %(sid)s ON ROLLBACK RETAIN CURSORS" % {'sid':self.preparer.format_savepoint(savepoint_stmt)}
+        return "SAVEPOINT %(sid)s ON ROLLBACK RETAIN CURSORS" % {'sid': self.preparer.format_savepoint(savepoint_stmt)}
 
     def visit_rollback_to_savepoint(self, savepoint_stmt):
         """
@@ -831,7 +844,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param savepoint_stmt: the savepoint statement class
         :returns: generated clause
         """
-        return 'ROLLBACK TO SAVEPOINT %(sid)s'% {'sid':self.preparer.format_savepoint(savepoint_stmt)}
+        return 'ROLLBACK TO SAVEPOINT %(sid)s' % {'sid': self.preparer.format_savepoint(savepoint_stmt)}
 
     def visit_release_savepoint(self, savepoint_stmt):
         """
@@ -839,20 +852,20 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param savepoint_stmt: the savepoint statement class
         :returns: generated clause
         """
-        return 'RELEASE TO SAVEPOINT %(sid)s'% {'sid':self.preparer.format_savepoint(savepoint_stmt)}
-    
+        return 'RELEASE TO SAVEPOINT %(sid)s' % {'sid': self.preparer.format_savepoint(savepoint_stmt)}
+
     def visit_unary(self, unary, **kw):
         """
         Process unary operator in Sqlalchemy for Splice SQL
         :param unary: the unary operator class
         :returns: clause generated
         """
-        if (unary.operator == operators.exists)  and kw.get('within_columns_clause', False):
-            usql = super(SpliceMachineCompiler, self).visit_unary(unary, **kw) # call parent
+        if (unary.operator == operators.exists) and kw.get('within_columns_clause', False):
+            usql = super(SpliceMachineCompiler, self).visit_unary(unary, **kw)  # call parent
             usql = "CASE WHEN " + usql + " THEN 1 ELSE 0 END"
             return usql
         else:
-            return super(SpliceMachineCompiler, self).visit_unary(unary, **kw) # call parent
+            return super(SpliceMachineCompiler, self).visit_unary(unary, **kw)  # call parent
 
     def visit_column(self, column, add_to_result_map=None, include_table=True, **kwargs):
         """
@@ -866,8 +879,8 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :returns: corrected table name
         """
         out = super(SpliceMachineCompiler, self).visit_column(column,
-            add_to_result_map=add_to_result_map, 
-            include_table=include_table, **kwargs)
+                                                              add_to_result_map=add_to_result_map,
+                                                              include_table=include_table, **kwargs)
         return out
 
 
@@ -878,7 +891,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
 ########################################
 
 class SpliceMachineDDLCompiler(compiler.DDLCompiler):
-    
+
     def _is_nullable_unique_constraint_supported(self, dialect):
         """
         Check if nullable unique constraints are supported
@@ -886,8 +899,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :param dialect: the current dialect (e.g. Splice Machine)
         :returns: whether or not it is supported
         """
-        return False # it is not supported
-    
+        return False  # it is not supported
 
     def get_column_default_string(self, column, **kw):
         """
@@ -906,7 +918,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :returns: column name, plus is specification (type)
         """
         col_spec = [self.preparer.format_column(column)]
-        col_spec.append(self.dialect.type_compiler.process(column.type,type_expression=column))
+        col_spec.append(self.dialect.type_compiler.process(column.type, type_expression=column))
         # add SQL Data type to specification, right off the bat
 
         # not nullable
@@ -925,9 +937,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
             col_spec.append('AS IDENTITY')
             col_spec.append('(START WITH 1)')
 
-        column_spec = ' '.join(col_spec) # convert to String
+        column_spec = ' '.join(col_spec)  # convert to String
         return column_spec
-
 
     def define_constraint_cascades(self, constraint):
         """
@@ -936,7 +947,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :returns: constraint clause
         """
         text = ""
-        if constraint.ondelete is not None: 
+        if constraint.ondelete is not None:
             text += " ON DELETE %s" % constraint.ondelete
 
         if constraint.onupdate is not None:
@@ -956,18 +967,18 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         if isinstance(constraint, sa_schema.ForeignKeyConstraint):
             # drop foreign key constraints
             qual = "FOREIGN KEY "
-            const = self.preparer.format_constraint(constraint) 
+            const = self.preparer.format_constraint(constraint)
         elif isinstance(constraint, sa_schema.PrimaryKeyConstraint):
             # drop primary key constraints
             qual = "PRIMARY KEY "
             const = ""
         elif isinstance(constraint, sa_schema.UniqueConstraint):
             # drop unique constraint
-            qual = "UNIQUE " 
-            if self._is_nullable_unique_constraint_supported(self.dialect): # no
+            qual = "UNIQUE "
+            if self._is_nullable_unique_constraint_supported(self.dialect):  # no
                 for column in constraint:
                     if column.nullable:
-                        constraint.uConstraint_as_index = True 
+                        constraint.uConstraint_as_index = True
                 if getattr(constraint, 'uConstraint_as_index', None):
                     qual = "INDEX "
             const = self.preparer.format_constraint(constraint)
@@ -977,16 +988,16 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         else:
             qual = ""
             const = self.preparer.format_constraint(constraint)
-            
+
         if hasattr(constraint, 'uConstraint_as_index') and constraint.uConstraint_as_index:
             return "DROP %s%s" % \
-                                (qual, const)
+                   (qual, const)
 
-        sql= ("ALTER TABLE %s DROP %s%s" % \
-                                (self.preparer.format_table(constraint.table),
-                                qual, const)) # get command
+        sql = ("ALTER TABLE %s DROP %s%s" % \
+               (self.preparer.format_table(constraint.table),
+                qual, const))  # get command
         return sql
-                
+
     def create_table_constraints(self, table, **kw):
         """
         Create constraints for a given SQLAlchemy table
@@ -1004,13 +1015,14 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                             break
                     if getattr(constraint, 'uConstraint_as_index', None):
                         if not constraint.name:
-                            index_name = "%s_%s_%s" % ('ukey', self.preparer.format_table(constraint.table), '_'.join(column.name for column in constraint))
+                            index_name = "%s_%s_%s" % ('ukey', self.preparer.format_table(constraint.table),
+                                                       '_'.join(column.name for column in constraint))
                         else:
                             index_name = constraint.name
-                        index = sa_schema.Index(index_name, *(column for column in constraint)) # create a new index
+                        index = sa_schema.Index(index_name, *(column for column in constraint))  # create a new index
                         index.unique = True
                         index.uConstraint_as_index = True
-        result = super( SpliceMachineDDLCompiler, self ).create_table_constraints(table, **kw) # call original
+        result = super(SpliceMachineDDLCompiler, self).create_table_constraints(table, **kw)  # call original
         return result
 
     def visit_create_table(self, create):
@@ -1020,12 +1032,12 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
             temporary_index = -1
 
         if temporary_index != -1:
-            create.element._prefixes.insert(temporary_index, 'GLOBAL') # we require 
+            create.element._prefixes.insert(temporary_index, 'GLOBAL')  # we require
             # global/local temporary table
 
         print(create.element._prefixes)
         return super(SpliceMachineDDLCompiler, self).visit_create_table(create)
-    
+
     def visit_create_index(self, create, include_schema=True, include_table_schema=True):
         """
         Create a new index in Splice Machine DB
@@ -1034,7 +1046,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :param include_table_schema: whether or not to include both schema and table in SQL
         :returns: create index command in SQL
         """
-        sql = super( SpliceMachineDDLCompiler, self ).visit_create_index(create, include_schema, include_table_schema)
+        sql = super(SpliceMachineDDLCompiler, self).visit_create_index(create, include_schema, include_table_schema)
         if getattr(create.element, 'uConstraint_as_index', None):
             sql += ' EXCLUDE NULL KEYS'
         return sql
@@ -1053,7 +1065,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                         break
                 if getattr(create.element, 'uConstraint_as_index', None):
                     if not create.element.name:
-                        index_name = "%s_%s_%s" % ('uk_index', self.preparer.format_table(create.element.table), '_'.join(column.name for column in create.element))
+                        index_name = "%s_%s_%s" % ('uk_index', self.preparer.format_table(create.element.table),
+                                                   '_'.join(column.name for column in create.element))
                     else:
                         index_name = create.element.name
                     index = sa_schema.Index(index_name, *(column for column in create.element))
@@ -1061,7 +1074,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                     index.uConstraint_as_index = True
                     sql = self.visit_create_index(sa_schema.CreateIndex(index))  # create index for constraint
                     return sql
-        sql = super( SpliceMachineDDLCompiler, self ).visit_add_constraint(create)
+        sql = super(SpliceMachineDDLCompiler, self).visit_add_constraint(create)
         return sql
 
 
@@ -1072,7 +1085,6 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
 ########################################
 
 class SpliceMachineIdentifierPreparer(compiler.IdentifierPreparer):
-
     reserved_words = constants.RESERVED_WORDS
     illegal_initial_characters = set(range(0, 10)).union(["_", "$"])
 
@@ -1092,8 +1104,9 @@ class SpliceMachineExecutionContext(default.DefaultExecutionContext):
         :param type_: the type of the sequence (typically INTEGER)
         """
         return self._execute_scalar("SELECT NEXTVAL FOR " +
-                    self.dialect.identifier_preparer.format_sequence(seq) +
-                    " FROM SYSIBM.SYSDUMMY1", type_)
+                                    self.dialect.identifier_preparer.format_sequence(seq) +
+                                    " FROM SYSIBM.SYSDUMMY1", type_)
+
 
 ########################################
 #                                      #
@@ -1104,10 +1117,10 @@ class _SelectLastRowIDMixin(object):
     """
     Used for autoincrementing columns
     """
-    _select_lastrowid = False # whether or not to retrieve current value of sequence (if identity)
-    _lastrowid = None # value last in sequence
-    _last_column_name = None # column name of identity col (only 1 supported per table)
-    _last_table = None # last table
+    _select_lastrowid = False  # whether or not to retrieve current value of sequence (if identity)
+    _lastrowid = None  # value last in sequence
+    _last_column_name = None  # column name of identity col (only 1 supported per table)
+    _last_table = None  # last table
 
     def get_lastrowid(self):
         """
@@ -1123,19 +1136,18 @@ class _SelectLastRowIDMixin(object):
         """
         if self.isinsert:
             tbl = self.compiled.statement.table
-            seq_column = tbl._autoincrement_column # is identity?
+            seq_column = tbl._autoincrement_column  # is identity?
             insert_has_sequence = seq_column is not None
 
             self._select_lastrowid = insert_has_sequence and \
-                                        not self.compiled.returning and \
-                                        not self.compiled.inline # should we get sequence value?
+                                     not self.compiled.returning and \
+                                     not self.compiled.inline  # should we get sequence value?
 
             if self._select_lastrowid:
-
-                schema = tbl.schema if tbl.schema else 'SPLICE' # find schema, else default schema
+                schema = tbl.schema if tbl.schema else 'SPLICE'  # find schema, else default schema
                 self._last_column_name = seq_column.key
                 self._last_table = (QuotationUtilities.conditionally_reserved_quote(schema)
-                         + "." + QuotationUtilities.conditionally_reserved_quote(tbl.name))
+                                    + "." + QuotationUtilities.conditionally_reserved_quote(tbl.name))
                 # we have to quote so we can use reserved words
 
     def _get_last_id(self):
@@ -1148,7 +1160,7 @@ class _SelectLastRowIDMixin(object):
         """
         conn = self.root_connection
         query = 'SELECT MAX({identity_col}) FROM {table}'.format(
-                identity_col=self._last_column_name, table=self._last_table
+            identity_col=self._last_column_name, table=self._last_table
         )
         conn._cursor_execute(self.cursor, query, (), self)
         result = self.cursor.fetchall()
@@ -1160,9 +1172,11 @@ class _SelectLastRowIDMixin(object):
         after executing
         """
         if self._select_lastrowid:
-            row_id = self._get_last_id() # get last seq value
+            row_id = self._get_last_id()  # get last seq value
             if row_id is not None:
                 self._lastrowid = row_id
+
+
 ########################################
 #                                      #
 #     Splice Machine SQL Dialect       #
@@ -1170,7 +1184,6 @@ class _SelectLastRowIDMixin(object):
 ########################################
 
 class SpliceMachineDialect(default.DefaultDialect):
-
     ##### DATABASE OPTIONS #####
     name = 'splicemachinesa'
     max_identifier_length = 128
@@ -1199,7 +1212,7 @@ class SpliceMachineDialect(default.DefaultDialect):
     supports_empty_insert = False
 
     two_phase_transactions = False
-    savepoints =  True
+    savepoints = True
 
     statement_compiler = SpliceMachineCompiler
     ddl_compiler = SpliceMachineDDLCompiler
@@ -1207,7 +1220,7 @@ class SpliceMachineDialect(default.DefaultDialect):
     preparer = SpliceMachineIdentifierPreparer
     execution_ctx_cls = SpliceMachineExecutionContext
 
-    _reflector_cls = sm_reflection.SMReflector # get reflectors
+    _reflector_cls = sm_reflection.SMReflector  # get reflectors
 
     def __init__(self, **kw):
         super(SpliceMachineDialect, self).__init__(**kw)
@@ -1219,7 +1232,7 @@ class SpliceMachineDialect(default.DefaultDialect):
         super(SpliceMachineDialect, self).initialize(connection)
         self.dbms_ver = None
         self.dbms_name = None
-        
+
     def normalize_name(self, name):
         return self._reflector.capitalize(name)
 
@@ -1234,11 +1247,10 @@ class SpliceMachineDialect(default.DefaultDialect):
 
     def has_sequence(self, connection, sequence_name, schema=None):
         return self._reflector.has_sequence(connection, sequence_name,
-                        schema=schema)
+                                            schema=schema)
 
     def get_schema_names(self, connection, **kw):
         return self._reflector.get_schema_names(connection, **kw)
-
 
     def get_table_names(self, connection, schema=None, **kw):
         return self._reflector.get_table_names(connection, schema=schema, **kw)
@@ -1248,26 +1260,27 @@ class SpliceMachineDialect(default.DefaultDialect):
 
     def get_view_definition(self, connection, viewname, schema=None, **kw):
         return self._reflector.get_view_definition(
-                                connection, viewname, schema=schema, **kw)
+            connection, viewname, schema=schema, **kw)
 
     def get_columns(self, connection, table_name, schema=None, **kw):
         return self._reflector.get_columns(
-                                connection, table_name, schema=schema, **kw)
+            connection, table_name, schema=schema, **kw)
 
     def get_primary_keys(self, connection, table_name, schema=None, **kw):
         return self._reflector.get_primary_keys(
-                                connection, table_name, schema=schema, **kw)
+            connection, table_name, schema=schema, **kw)
 
     def get_foreign_keys(self, connection, table_name, schema=None, **kw):
         return self._reflector.get_foreign_keys(
-                                connection, table_name, schema=schema, **kw)
-        
+            connection, table_name, schema=schema, **kw)
+
     def get_incoming_foreign_keys(self, connection, table_name, schema=None, **kw):
         return self._reflector.get_incoming_foreign_keys(
-                                connection, table_name, schema=schema, **kw)
+            connection, table_name, schema=schema, **kw)
 
     def get_indexes(self, connection, table_name, schema=None, **kw):
         return self._reflector.get_indexes(
-                                connection, table_name, schema=schema, **kw)
-        
+            connection, table_name, schema=schema, **kw)
+
+
 dialect = SpliceMachineDialect

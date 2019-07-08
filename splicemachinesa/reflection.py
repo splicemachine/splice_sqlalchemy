@@ -23,6 +23,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+
 class CoerceUnicode(sa_types.TypeDecorator):
     """
     Coerce a given type to unicode
@@ -34,20 +35,22 @@ class CoerceUnicode(sa_types.TypeDecorator):
             value = value
         return value
 
+
 class BaseReflector(object):
     """
     Standard functions for Splice Machine
     SQL Reflector
     """
+
     def __init__(self, dialect):
         """
         :param dialect: current SQL Dialect (splice sql)
         """
-        self.dialect = dialect # splice SQL
-        self.ischema_names = dialect.ischema_names # supported data types
-        self.identifier_preparer = dialect.identifier_preparer # formatting
+        self.dialect = dialect  # splice SQL
+        self.ischema_names = dialect.ischema_names  # supported data types
+        self.identifier_preparer = dialect.identifier_preparer  # formatting
 
-        self.default_schema_id = None # default schema (SPLICE)
+        self.default_schema_id = None  # default schema (SPLICE)
 
     def capitalize(self, identifier):
         """
@@ -63,7 +66,7 @@ class BaseReflector(object):
         :param connection: ODBC cnxn to Splice
         Return: current setting of the schema attribute
         """
-        return 'SPLICE' # our default schema is SPLICE
+        return 'SPLICE'  # our default schema is SPLICE
 
     @property
     def default_schema_name(self):
@@ -71,6 +74,7 @@ class BaseReflector(object):
         Getter for default schema name
         """
         return self.dialect.default_schema_name
+
 
 class SMReflector(BaseReflector):
     ischema = MetaData()
@@ -100,10 +104,10 @@ class SMReflector(BaseReflector):
         # SQL Query
         out = connection.execute(query).first()
         if out:
-            return out[0] # exists
+            return out[0]  # exists
         else:
-            return None # doesn't exist
-    
+            return None  # doesn't exist
+
     def get_schema_id_or_default(self, schemaName, connection):
         """
         Returns default schema id if schemaName is none,
@@ -114,11 +118,11 @@ class SMReflector(BaseReflector):
         :returns: schema id or default schema if schema is not specified, else schema id
         """
         if schemaName:
-            schema = self.capitalize(schemaName) # != None
+            schema = self.capitalize(schemaName)  # != None
         else:
-            schema = self.default_schema_name # == null
-        return self.get_schema_id(schema, connection) # get schema id
-    
+            schema = self.default_schema_name  # == null
+        return self.get_schema_id(schema, connection)  # get schema id
+
     def has_table(self, connection, table_name, schema=None):
         """
         Return if table exists in DB
@@ -127,9 +131,9 @@ class SMReflector(BaseReflector):
         :param schema: schema of the table
         :returns: whether or not table exists
         """
-       
+
         current_schema = self.capitalize(
-            schema or self.default_schema_name) # get uppercase for tables
+            schema or self.default_schema_name)  # get uppercase for tables
         table_name = self.capitalize(table_name)
 
         query = """
@@ -138,7 +142,7 @@ class SMReflector(BaseReflector):
         SCHEMANAME = '{schema}' AND
         TABLENAME = '{table}'
         """.format(systable=self.SYS_TABLEVIEW, schema=current_schema,
-            table=table_name)
+                   table=table_name)
         c = connection.execute(query)
         # execute sql over odbc
         out = c.first() is not None
@@ -157,13 +161,13 @@ class SMReflector(BaseReflector):
         # get schema id for the sequence
         current_schema = self.capitalize(schema or self.default_schema_name)
         sequence_name = self.capitalize(sequence_name)
-        
+
         query = """
         SELECT SEQUENCENAME FROM 
         {systable} WHERE SEQUENCESSCHEMAID='{schemaid}'
         AND SEQUENCENAME='{sequencename}'
         """.format(schemaid=schema_id, sequence_name=sequence_name,
-            systable=self.SYS_SEQUENCES)
+                   systable=self.SYS_SEQUENCES)
 
         c = connection.execute(s)
         return c.first() is not None
@@ -183,7 +187,6 @@ class SMReflector(BaseReflector):
         print(out)
         return out
 
-
     @reflection.cache
     def get_table_names(self, connection, schema=None, lowercase=True, **kw):
         """
@@ -198,7 +201,7 @@ class SMReflector(BaseReflector):
         :returns: list of all tables under schema
         """
 
-        schema_id = self.get_schema_id_or_default(schema, connection) # get schema id
+        schema_id = self.get_schema_id_or_default(schema, connection)  # get schema id
 
         query = """
         SELECT TABLENAME FROM {systable}
@@ -222,12 +225,12 @@ class SMReflector(BaseReflector):
         WHERE TABLEID='{tableid}'
         """.format(systable=self.capitalize(SYS_TABLE), tableid=tableid)
 
-        result = connection.execute(query).first().upper() # execute SQL
+        result = connection.execute(query).first().upper()  # execute SQL
 
         if result:
             return result[0]
         return None
-      
+
     def get_table_id(self, connection, tablename, schemaid=None, only_views=False):
         """
         Get ID of table given its name
@@ -238,8 +241,8 @@ class SMReflector(BaseReflector):
         query = """
         SELECT TABLEID FROM 
         {sys_table} WHERE TABLENAME='{table}'
-        """.format(sys_table=self.SYS_TABLEVIEW, 
-            table=self.capitalize(tablename))
+        """.format(sys_table=self.SYS_TABLEVIEW,
+                   table=self.capitalize(tablename))
         if schemaid:
             query += "AND SCHEMAID='{schemaid}'\n".format(schemaid=schemaid)
         if only_views:
@@ -247,7 +250,7 @@ class SMReflector(BaseReflector):
 
         print(query)
         # select to get table id
-        result = connection.execute(query).first() # execute SQL
+        result = connection.execute(query).first()  # execute SQL
         if result:
             return result[0]
         return None
@@ -290,12 +293,12 @@ class SMReflector(BaseReflector):
         current_schema = self.capitalize(schema or self.default_schema_name)
         viewname = self.capitalize(viewname)
         tableid = self.get_table_id(connection, viewname, schemaid=schemaid, only_views=True)
-        
+
         query = """
         SELECT VIEWDEFINITION FROM 
         {systable} WHERE TABLEID='{tableid}'
         """.format(systable=self.SYS_VIEWS,
-            tableid=tableid)
+                   tableid=tableid)
 
         print(query)
         # get view definition
@@ -311,16 +314,16 @@ class SMReflector(BaseReflector):
             to extract, serially
         """
         query = "CALL SYSIBM.SQLCOLUMNS(null, '{schema}','{table}', null, 'DATATYPE'='ODBC')".format(
-                schema=schema, table=table
+            schema=schema, table=table
         )
         results = []
-        for res in connection.execute(query): # get all value @ indices in col_indices order
+        for res in connection.execute(query):  # get all value @ indices in col_indices order
             results.append([res[ci] for ci in col_indices])
 
         return results
 
     @reflection.cache
-    def get_columns(self, connection, table_name, schema=None,lowercase=True, **kw):
+    def get_columns(self, connection, table_name, schema=None, lowercase=True, **kw):
         """
         Get all columns for a given table
         :param connection: ODBC cnxn
@@ -331,39 +334,39 @@ class SMReflector(BaseReflector):
         current_schema = self.capitalize(schema or self.default_schema_name)
         table = self.capitalize(table_name)
 
-        INDICES = [3, 5, 12, 17, 6, 8, 22, 23] # these are the indexes in our table
+        INDICES = [3, 5, 12, 17, 6, 8, 22, 23]  # these are the indexes in our table
         # which correspond to the ones in IBM DB2
         # name, type, default, nullable, precision, scale, autoincrement 
         column_data = self.get_columns_from_db(connection, current_schema, table,
-            col_indices=INDICES) # call SYSIBM.SQLCOLUMNS
+                                               col_indices=INDICES)  # call SYSIBM.SQLCOLUMNS
 
-        sa_columns = [] 
+        sa_columns = []
         for r in column_data:
-            coltype = self.capitalize(r[1]) # extract column type
+            coltype = self.capitalize(r[1])  # extract column type
             if coltype in ['DECIMAL', 'NUMERIC']:
-                coltype = self.ischema_names.get(coltype)(int(r[4]), int(r[5])) # extract
+                coltype = self.ischema_names.get(coltype)(int(r[4]), int(r[5]))  # extract
                 # full name of two argument types e.g. DECIMAL(3,1)
             elif coltype in ['CHARACTER', 'CHAR', 'VARCHAR']:
                 coltype = self.ischema_names.get(coltype)(int(r[4]))
                 # one var types: e.g. VARCHAR(100)
             else:
                 try:
-                    coltype = self.ischema_names[coltype] 
+                    coltype = self.ischema_names[coltype]
                 except KeyError:
                     util.warn("Did not recognize type '%s' of column '%s'" %
-                            (coltype, r[0]))
-                    coltype = coltype = sa_types.NULLTYPE # assign no type if not understood
+                              (coltype, r[0]))
+                    coltype = coltype = sa_types.NULLTYPE  # assign no type if not understood
 
-            sa_columns.append({ # add column data to array
-                    'name': r[0].lower(),
-                    'type': coltype,
-                    'nullable': r[3] == 'YES',
-                    'default': r[2] or None,
-                    'autoincrement': (r[6] == 'YES'),
-                })
+            sa_columns.append({  # add column data to array
+                'name': r[0].lower(),
+                'type': coltype,
+                'nullable': r[3] == 'YES',
+                'default': r[2] or None,
+                'autoincrement': (r[6] == 'YES'),
+            })
         return sa_columns
 
-    def get_primary_keys_from_table(self, connection,schema, table):
+    def get_primary_keys_from_table(self, connection, schema, table):
         """
         Get list of primary keys from table
         :param connection: ODBC cnxn
@@ -375,7 +378,7 @@ class SMReflector(BaseReflector):
             schema=schema, table=table
         )
         # stored procedure to get primary keys
-        results = [i[3] for i in list(connection.execute(query))] # get primary keys
+        results = [i[3] for i in list(connection.execute(query))]  # get primary keys
         return results
 
     @reflection.cache
@@ -391,9 +394,8 @@ class SMReflector(BaseReflector):
         table = self.capitalize(table_name)
 
         primary_keys = self.get_primary_keys_from_table(connection, current_schema, table)
-        
-        return primary_keys
 
+        return primary_keys
 
     def get_foreign_keys_from_db(self, connection, schema, table, imported=True):
         """
@@ -423,7 +425,7 @@ class SMReflector(BaseReflector):
         """
         current_schema = self.capitalize(schema or self.default_schema_name)
         table_name = self.capitalize(table_name)
-        
+
         results = self.get_foreign_keys_from_db(connection, current_schema, table_name, imported=True)
         fschema = {}
         for r in results:
@@ -433,7 +435,7 @@ class SMReflector(BaseReflector):
                 # if no schema specified and referred schema here is the
                 # default, then set to None
                 if schema is None and \
-                    referred_schema == self.default_schema_name:
+                        referred_schema == self.default_schema_name:
                     referred_schema = None
 
                 fschema[r[12]] = {
@@ -459,7 +461,7 @@ class SMReflector(BaseReflector):
         """
         current_schema = self.capitalize(schema or self.default_schema_name)
         table_name = self.capitalize(table_name)
-        
+
         results = self.get_foreign_keys_from_db(connection, current_schema, table_name, imported=True)
 
         fschema = {}
@@ -470,7 +472,7 @@ class SMReflector(BaseReflector):
                 # if no schema specified and referred schema here is the
                 # default, then set to None
                 if schema is None and \
-                    constrained_schema == self.default_schema_name:
+                        constrained_schema == self.default_schema_name:
                     constrained_schema = None
 
                 fschema[r[12]] = {
@@ -485,4 +487,3 @@ class SMReflector(BaseReflector):
                 fschema[r[12]]['constrained_columns'].append(r[7])
                 fschema[r[12]]['referred_columns'].append(r[3])
         return [value for key, value in fschema.items()]
-
