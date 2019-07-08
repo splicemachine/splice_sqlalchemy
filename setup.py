@@ -20,17 +20,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 setup(
     name='splicemachinesa',
     version=VERSION,
     license='Apache License 2.0',
     description='SQLAlchemy support for Splice Machine RDBMS',
-    author='IBM Application Development Team, Amrit Baveja',
+    author= 'Amrit Baveja',
     author_email='abaveja@splicemachine.com',
     platforms='All',
-    install_requires=['sqlalchemy>=0.7.3'],
+    install_requires=['sqlalchemy>=0.7.3', 'pyodbc>=4.0.26'],
     packages=['splicemachinesa'],
     entry_points={
         'sqlalchemy.dialects': [
@@ -40,5 +40,5 @@ setup(
         ]
     },
     zip_safe=False,
-    tests_require=['nose >= 0.11'],
+    tests_require=['nose >= 0.11']
 )
