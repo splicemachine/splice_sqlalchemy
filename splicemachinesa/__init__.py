@@ -1,14 +1,11 @@
 from . import splice_machine, pyodbc, base
+
+###################
+# Package Version #
+###################
+
+VERSION = "0.0.4"
+__VERSION__ = VERSION  # alias
+
 # default dialect
 base.dialect = splice_machine.dialect
-
-from .base import \
-    BIGINT, BLOB, CHAR, CLOB, DATE, DATETIME, \
-    DECIMAL, DOUBLE, INTEGER, LONGVARCHAR, \
-    NUMERIC, SMALLINT, REAL, TIME, TIMESTAMP, \
-    VARCHAR, dialect
-
-#__all__ = (
-    # TODO: (put types here)
-#    'dialect'
-#)

@@ -20,14 +20,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = "0.0.3"
+from splicemachinesa import VERSION
 
 setup(
     name='splicemachinesa',
     version=VERSION,
     license='Apache License 2.0',
     description='SQLAlchemy support for Splice Machine RDBMS',
-    author= 'Amrit Baveja',
+    author='Amrit Baveja',
     author_email='abaveja@splicemachine.com',
     platforms='All',
     install_requires=['sqlalchemy>=0.7.3', 'pyodbc>=4.0.26'],
