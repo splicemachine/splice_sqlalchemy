@@ -32,4 +32,4 @@ class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
 
     execution_ctx_cls = SpliceMachineExecutionContext_pyodbc
 
-    pyodbc_driver_name = "SM ODBC DRIVER"
+    pyodbc_driver_name = "SpliceODBC64"
