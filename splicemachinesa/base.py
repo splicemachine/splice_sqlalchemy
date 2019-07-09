@@ -175,7 +175,7 @@ class _SM_Date(sa_types.Date):
                 return None  # null
             if isinstance(value, datetime.datetime):  # can be parsed?
                 value = datetime.date(value.year, value.month, value.day)
-            out = str(value)  # stringify
+            out = bytes(value.encode('utf-8'))  # stringify
             return out
 
         return process
@@ -186,6 +186,7 @@ class _SM_Date(sa_types.Date):
 colspecs = {
     sa_types.Boolean: _SM_Boolean,
     sa_types.Date: _SM_Date,
+    sa_types.DateTime: _SM_Date,
     sa_types.String: _SM_String,
     sa_types.Integer: _SM_Integer
 }
@@ -763,7 +764,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         )
 
         for param in out:
-            # unicode won't be hit in Python3 (short-circuit execution) ¯\_(ツ)_/¯
+            # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param])
         return out
