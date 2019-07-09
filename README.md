@@ -12,7 +12,7 @@ First, download the appropriate Splice Machine ODBC driver for your system.
 Mac OSX 64 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-2.7.60.0.tar.gz">Download</a><br>
 Linux 32 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/Linux32/splice_odbc_linux32-2.7.58.0.tar.gz">Download</a><br>
 Linux 64 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/Linux64/splice_odbc_linux64-2.7.60.0.tar.gz">Download</a><br>
-<b>Note: Windows is not currently supported for Splice Machine SQLAlchemy ODBC 
+<b>Note: Windows is not currently supported for Splice Machine SQLAlchemy ODBC</b>
 <hr>
 Then, follow the instructions <a href="https://doc.splicemachine.com/tutorials_connect_odbcinstall.html">here</a> to finish the installation, but use the download links above to retrieve the Driver tarball
 <hr> 
@@ -28,7 +28,7 @@ There are three URL formats that can be used to access
 SpliceMachine via ODBC through SQLAlchemy. The first will suffice in most cases.
 <hr>
 
-####1: Standard URL format<br>
+#### 1: Standard URL format<br>
 Format: `splicemachinesa://[user]:[password]@[host]:[port]/[database]`
 The Driver Name defaults to `SpliceODBCDriver`, which is the default name 
 when the driver is installed (specified in `odbc.ini`). However, this name can be overridden through the 
@@ -41,7 +41,7 @@ url = 'splicemachinesa://splice:admin@127.0.0.1:1527/splicedb'
 engine = create_engine(url)
 ```
 
-####2. Custom Configuration Without Driver
+#### 2. Custom Configuration Without Driver
 Format: `splicemachinesa://?DRIVER=[driver]&URL=[URL]&PORT=[PORT]&UID=[USER]&PWD=[PASSWORD]`
 <br>You can use this SQLAlchemy driver without an ODBC configuration (meaning running the installation from Splice Machine docs)
 by manually specifying the driver path. On OSX (given installation with `sudo` ), this is found in `/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib.`
@@ -63,7 +63,7 @@ url = url_builder('/usr/local/splice/lib/libsplice_odbc.so', host=[0.0.0.0], por
 engine = create_engine(url) 
 ```
 
-####3. DSN Configuration
+#### 3. DSN Configuration
 Format: `splicemachinesa://[dsn]`
 Splice Machine SQLAlchemy also supports ODBC DSNs for 
 Driver configuration. This means that rather than explicitly specifying
