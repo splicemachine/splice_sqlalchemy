@@ -38,7 +38,7 @@ class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
     if os.environ.get('SPLICE_ODBC_DRIVER_NAME'):
         pyodbc_driver_name = os.environ['SPLICE_ODBC_DRIVER_NAME']
     else:
-        pyodbc_driver_name = "SpliceODBC64"
+        pyodbc_driver_name = "SpliceODBCDriver"
 
     def create_connect_args(self, url):
         print(url)
