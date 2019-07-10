@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-import os
-import re
 
 """
 Copyright 2019 Splice Machine Inc.
@@ -20,17 +18,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from splicemachinesa import VERSION
+VERSION = '0.0.5'
 
 setup(
     name='splicemachinesa',
     version=VERSION,
+    url='https://splicemachine.com',
+    keywords=['sqlalchemy', 'splice', 'machine', 'splice machine', 'odbc', 'driver', 'sqlalchemy driver'],
     license='Apache License 2.0',
     description='SQLAlchemy support for Splice Machine RDBMS',
     author='Amrit Baveja',
     author_email='abaveja@splicemachine.com',
+    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-0.0.4.dev0.tar.gz',
     platforms='All',
-    install_requires=['sqlalchemy>=0.7.3', 'pyodbc>=4.0.26'],
+    install_requires=[
+        'sqlalchemy>=0.7.3',
+        'pyodbc>=4.0.26'
+    ],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: POSIX :: Linux',
+        'Topic :: Database'
+    ],
     packages=['splicemachinesa'],
     entry_points={
         'sqlalchemy.dialects': [
@@ -39,6 +51,8 @@ setup(
             'splicemachinesa.pyodbc=splicemachinesa.pyodbc:SpliceMachineDialect_pyodbc',
         ]
     },
+    long_description_content_type='text/markdown',
+    long_description=open('README.md').read(),
     zip_safe=False,
     tests_require=['nose >= 0.11']
 )
