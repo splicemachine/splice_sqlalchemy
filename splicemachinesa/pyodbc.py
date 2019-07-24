@@ -41,7 +41,6 @@ class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
         pyodbc_driver_name = "SpliceODBCDriver"
 
     def create_connect_args(self, url):
-        print(url)
         opts = url.translate_connect_args(username="user")
         opts.update(url.query)
 

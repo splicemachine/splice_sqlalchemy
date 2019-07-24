@@ -1,16 +1,20 @@
 from __future__ import unicode_literals
-import datetime, re, sys
-from sqlalchemy import types as sa_types
-from sqlalchemy import schema as sa_schema
-from sqlalchemy import util
-from sqlalchemy.sql import operators, compiler
-from sqlalchemy.engine import default
-from . import reflection as sm_reflection
-from . import constants
 
+import datetime
+import re
+import sys
+
+from sqlalchemy import schema as sa_schema
+from sqlalchemy import types as sa_types
+from sqlalchemy import util
+from sqlalchemy.engine import default
+from sqlalchemy.sql import operators, compiler
 from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER, \
     SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP, \
     VARCHAR, FLOAT
+
+from . import constants
+from . import reflection as sm_reflection
 
 """
 Copyright 2019 Splice Machine Inc.
@@ -301,12 +305,10 @@ class QuotationUtilities:
         :param column_type_string: string version
             of column type object
         """
-        if TypeRegexes.NUM_RX.search(column_type_string):
-            return QuotationUtilities.dequote
-        elif TypeRegexes.STR_RX.search(column_type_string):
+
+        if TypeRegexes.STR_RX.search(column_type_string):
             return QuotationUtilities.check_and_quote
-        else:
-            raise Exception("Invalid Column Type: " + str(column_type_string))
+        return QuotationUtilities.dequote
 
     @staticmethod
     def conditionally_reserved_quote(identifier):
@@ -713,7 +715,8 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             sql_pri = sql_pri[:len(sql_pri) - 1]
             sql_pri = "%s%s" % (sql_pri, sql_sec)
             sql_sel = sql_sel[:len(sql_sel) - 1]
-            sql = '%s, ( ROW_NUMBER() OVER() ) AS "%s" FROM ( %s ) AS M' % (sql_sel, __rownum, sql_pri)
+            sql = '%s, ( ROW_NUMBER() OVER() ) AS "%s" FROM ( %s ) AS M' % (
+            sql_sel, __rownum, sql_pri)
             sql = '%s FROM ( %s ) Z WHERE' % (sql_sel, sql)
 
             # Add limits and offsets
@@ -833,7 +836,8 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param savepoint_stmt: the savepoint statement class
         :returns: generated clause
         """
-        return "SAVEPOINT %(sid)s ON ROLLBACK RETAIN CURSORS" % {'sid': self.preparer.format_savepoint(savepoint_stmt)}
+        return "SAVEPOINT %(sid)s ON ROLLBACK RETAIN CURSORS" % {
+            'sid': self.preparer.format_savepoint(savepoint_stmt)}
 
     def visit_rollback_to_savepoint(self, savepoint_stmt):
         """
@@ -841,7 +845,8 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param savepoint_stmt: the savepoint statement class
         :returns: generated clause
         """
-        return 'ROLLBACK TO SAVEPOINT %(sid)s' % {'sid': self.preparer.format_savepoint(savepoint_stmt)}
+        return 'ROLLBACK TO SAVEPOINT %(sid)s' % {
+            'sid': self.preparer.format_savepoint(savepoint_stmt)}
 
     def visit_release_savepoint(self, savepoint_stmt):
         """
@@ -849,7 +854,8 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param savepoint_stmt: the savepoint statement class
         :returns: generated clause
         """
-        return 'RELEASE TO SAVEPOINT %(sid)s' % {'sid': self.preparer.format_savepoint(savepoint_stmt)}
+        return 'RELEASE TO SAVEPOINT %(sid)s' % {
+            'sid': self.preparer.format_savepoint(savepoint_stmt)}
 
     def visit_unary(self, unary, **kw):
         """
@@ -1013,14 +1019,17 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                             break
                     if getattr(constraint, 'uConstraint_as_index', None):
                         if not constraint.name:
-                            index_name = "%s_%s_%s" % ('ukey', self.preparer.format_table(constraint.table),
-                                                       '_'.join(column.name for column in constraint))
+                            index_name = "%s_%s_%s" % (
+                            'ukey', self.preparer.format_table(constraint.table),
+                            '_'.join(column.name for column in constraint))
                         else:
                             index_name = constraint.name
-                        index = sa_schema.Index(index_name, *(column for column in constraint))  # create a new index
+                        index = sa_schema.Index(index_name, *(column for column in
+                                                              constraint))  # create a new index
                         index.unique = True
                         index.uConstraint_as_index = True
-        result = super(SpliceMachineDDLCompiler, self).create_table_constraints(table, **kw)  # call original
+        result = super(SpliceMachineDDLCompiler, self).create_table_constraints(table,
+                                                                                **kw)  # call original
         return result
 
     def visit_create_table(self, create):
@@ -1043,7 +1052,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         :param include_table_schema: whether or not to include both schema and table in SQL
         :returns: create index command in SQL
         """
-        sql = super(SpliceMachineDDLCompiler, self).visit_create_index(create, include_schema, include_table_schema)
+        sql = super(SpliceMachineDDLCompiler, self).visit_create_index(create, include_schema,
+                                                                       include_table_schema)
         if getattr(create.element, 'uConstraint_as_index', None):
             sql += ' EXCLUDE NULL KEYS'
         return sql
@@ -1062,14 +1072,16 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                         break
                 if getattr(create.element, 'uConstraint_as_index', None):
                     if not create.element.name:
-                        index_name = "%s_%s_%s" % ('uk_index', self.preparer.format_table(create.element.table),
-                                                   '_'.join(column.name for column in create.element))
+                        index_name = "%s_%s_%s" % (
+                        'uk_index', self.preparer.format_table(create.element.table),
+                        '_'.join(column.name for column in create.element))
                     else:
                         index_name = create.element.name
                     index = sa_schema.Index(index_name, *(column for column in create.element))
                     index.unique = True
                     index.uConstraint_as_index = True
-                    sql = self.visit_create_index(sa_schema.CreateIndex(index))  # create index for constraint
+                    sql = self.visit_create_index(
+                        sa_schema.CreateIndex(index))  # create index for constraint
                     return sql
         sql = super(SpliceMachineDDLCompiler, self).visit_add_constraint(create)
         return sql
@@ -1144,7 +1156,8 @@ class _SelectLastRowIDMixin(object):
                 schema = tbl.schema if tbl.schema else 'SPLICE'  # find schema, else default schema
                 self._last_column_name = seq_column.key
                 self._last_table = (QuotationUtilities.conditionally_reserved_quote(schema)
-                                    + "." + QuotationUtilities.conditionally_reserved_quote(tbl.name))
+                                    + "." + QuotationUtilities.conditionally_reserved_quote(
+                            tbl.name))
                 # we have to quote so we can use reserved words
 
     def _get_last_id(self):
