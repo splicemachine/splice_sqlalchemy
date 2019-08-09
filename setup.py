@@ -18,7 +18,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = '0.0.8'
+VERSION = '0.0.9'
 
 setup(
     name='splicemachinesa',
@@ -29,7 +29,7 @@ setup(
     description='SQLAlchemy support for Splice Machine RDBMS',
     author='Amrit Baveja',
     author_email='abaveja@splicemachine.com',
-    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-0.0.8.dev0.tar.gz',
+    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-0.0.9.dev0.tar.gz',
     platforms='All',
     install_requires=[
         'sqlalchemy>=0.7.3',

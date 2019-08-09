@@ -18,7 +18,7 @@ limitations under the License.
 
 # keywords that trigger double quotation with "<identifier>"
 # otherwise splice will interpret them as SQL keywords
-RESERVED_WORDS = {'activate', 'disallow', 'locale', 'result', 'add', 'disconnect', 'localtime', 'result_set_locator',
+RESERVED_WORDS = {'activate', 'disallow', 'locale', 'result', 'add', 'disconnect', 'localtime', 'result_set_locator', 'size',
                   'after', 'distinct', 'localtimestamp', 'return', 'alias', 'do', 'locator', 'returns', 'all', 'double',
                   'locators', 'revoke', 'allocate', 'drop', 'lock', 'right', 'allow', 'dssize', 'lockmax', 'rollback',
                   'alter', 'dynamic', 'locksize', 'routine', 'and', 'each', 'long', 'row', 'any', 'editproc', 'loop',
