@@ -62,7 +62,7 @@ class BaseReflector(object):
         :param connection: ODBC cnxn to Splice
         Return: current setting of the schema attribute
         """
-        return 'SPLICE'  # our default schema is SPLICE
+        return connection.execute('VALUES(CURRENT SCHEMA)').fetchone()[0]  # our default schema is SPLICE
 
     @property
     def default_schema_name(self):
