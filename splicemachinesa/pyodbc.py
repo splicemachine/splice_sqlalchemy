@@ -1,7 +1,7 @@
 from sqlalchemy.connectors.pyodbc import PyODBCConnector, util
 from .base import _SelectLastRowIDMixin, SpliceMachineExecutionContext, SpliceMachineDialect
 import os
-
+import re
 """
 Copyright 2019 Splice Machine Inc.
 
@@ -118,5 +118,5 @@ class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
             connectors.extend(["%s=%s" % (k, v) for k, v in keys.items()])
 
         out = [[";".join(connectors)], connect_args]
-        print(out)
+        print(re.sub(r';PWD=\w+',';PWD=***',out))
         return out
