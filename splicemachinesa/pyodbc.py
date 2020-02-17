@@ -118,5 +118,5 @@ class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
             connectors.extend(["%s=%s" % (k, v) for k, v in keys.items()])
 
         out = [[";".join(connectors)], connect_args]
-        print(re.sub(r';PWD=\w+',';PWD=***',out))
+        print(re.sub(r';PWD=\w+',';PWD=***',str(out)))
         return out
