@@ -33,7 +33,7 @@ setup(
 	version=VERSION),
     platforms='All',
     install_requires=[
-        'sqlalchemy>=0.7.3',
+        'sqlalchemy',
         'pyodbc>=4.0.26'
     ],
     classifiers=[
