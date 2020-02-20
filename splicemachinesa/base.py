@@ -1153,12 +1153,14 @@ class _SelectLastRowIDMixin(object):
                                      not self.compiled.inline  # should we get sequence value?
 
             if self._select_lastrowid:
-                schema = tbl.schema if tbl.schema else 'SPLICE'  # find schema, else default schema
-                self._last_column_name = seq_column.key
-                self._last_table = (QuotationUtilities.conditionally_reserved_quote(schema)
+                if tbl.schema:
+                    self._last_table = (QuotationUtilities.conditionally_reserved_quote(tbl.schema)
                                     + "." + QuotationUtilities.conditionally_reserved_quote(
                             tbl.name))
-                # we have to quote so we can use reserved words
+                else:
+                    self._last_table = (QuotationUtilities.conditionally_reserved_quote(
+                            tbl.name))
+                self._last_column_name = seq_column.key
 
     def _get_last_id(self):
         """
