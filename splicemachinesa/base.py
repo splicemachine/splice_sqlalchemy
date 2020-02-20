@@ -1161,10 +1161,6 @@ class _SelectLastRowIDMixin(object):
                     self._last_table = (QuotationUtilities.conditionally_reserved_quote(
                             tbl.name))
                 self._last_column_name = seq_column.key
-                # self._last_table = (QuotationUtilities.conditionally_reserved_quote(schema)
-                #                     + "." + QuotationUtilities.conditionally_reserved_quote(
-                #             tbl.name))
-                # we have to quote so we can use reserved words
 
     def _get_last_id(self):
         """
