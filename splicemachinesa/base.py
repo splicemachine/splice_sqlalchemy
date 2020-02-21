@@ -69,33 +69,6 @@ class _SM_Integer(sa_types.Integer):
 
         return process
 
-
-class _SM_String(sa_types.String):
-    """
-    Overrided String class for
-    unicode + posix conversions (MLFlow
-    puts these types into SQLAlchemy
-    frequently and they don't render in
-    VARCHAR types properly)
-    """
-
-    def bind_processor(self, dialect):
-        """
-        Return a conversion function
-        that transforms into
-        Strings
-        :param dialect: the current dialect
-            in use
-        :returns: conversion function
-        """
-
-        def process(value):
-            return None if value is None else bytes(value.encode('utf-8'))
-
-        # we use bytes type for python3 backwards compatibility
-        return process
-
-
 class _SM_Boolean(sa_types.Boolean):
     """
     An overrided boolean class specifically
@@ -191,8 +164,7 @@ colspecs = {
     sa_types.Boolean: _SM_Boolean,
     sa_types.Date: _SM_Date,
     sa_types.DateTime: _SM_Date,
-    sa_types.String: _SM_String,
-    sa_types.Integer: _SM_Integer
+    sa_types.Integer: _SM_Integer,
 }
 
 
@@ -201,7 +173,6 @@ colspecs = {
 #     Data Types Specific To Splice    #
 #                                      #
 ########################################
-
 class DOUBLE(sa_types.Numeric):
     """
     Double Data Type --
@@ -248,11 +219,12 @@ class TypeRegexes:
     Regexes for matching
     default type converters
     """
-    NUM_RX = re.compile('|'.join(['INT', 'DECIMAL', 'NUMERIC', 'REAL', 'DOUBLE', 'FLOAT']))
     # numeric types
+    NUM_RX = re.compile('|'.join(['INT', 'DECIMAL', 'NUMERIC', 'REAL', 'DOUBLE', 'FLOAT']))
+    # string types
     STR_RX = re.compile('|'.join(['BLOB', 'CLOB', 'CHAR', 'CHARACTER', 'DATE', 'DATETIME',
                                   'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
-    # string types
+
 
 
 class QuotationUtilities:
@@ -455,7 +427,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         """
         return "VARCHAR(500)" if type_.length in (None, 0) else \
             "VARCHAR(%(length)s)" % {'length': type_.length}
-        # VARCHAR(100) should be default on Splice
+        # TODO: a VARCHAR without a length specification may need to be a CLOB
 
     def visit_LONGVARCHAR(self, type_):
         """
@@ -556,6 +528,8 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
+        if type_.precision:
+            type_.precision = min(type_.precision, 52)
         return self.visit_FLOAT(type_)
 
     def visit_string(self, type_):
@@ -569,7 +543,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
 
     def visit_TEXT(self, type_):
         """
-        clob (character large objectrendering
+        clob (character large object rendering)
         :param type_: the SQLAlchemy datatype
             specified by the user
         :returns: data type rendering
@@ -1041,8 +1015,15 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         if temporary_index != -1:
             create.element._prefixes.insert(temporary_index, 'GLOBAL')  # we require
             # global/local temporary table
-
-        return super(SpliceMachineDDLCompiler, self).visit_create_table(create)
+        out = super(SpliceMachineDDLCompiler, self).visit_create_table(create)
+         # If a column is a primary key, remove the unique constraint
+        for c in create.element.c:
+            if c.primary_key and c.unique:
+                pk_name = c.name
+                regxp = re.compile(f',\s*\n.*?UNIQUE \({pk_name}\)')
+                out = re.sub(regxp,'', out)
+                break
+        return out
 
     def visit_create_index(self, create, include_schema=True, include_table_schema=True):
         """
@@ -1226,6 +1207,7 @@ class SpliceMachineDialect(default.DefaultDialect):
 
     two_phase_transactions = False
     savepoints = True
+    supports_native_enum = False
 
     statement_compiler = SpliceMachineCompiler
     ddl_compiler = SpliceMachineDDLCompiler

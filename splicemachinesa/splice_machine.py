@@ -103,6 +103,7 @@ class SpliceMachineDialect_sm(SpliceMachineDialect):
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = False
     supports_native_decimal = False
+    supports_native_enum = False
     supports_char_length = True
     supports_default_values = False
     supports_multivalues_insert = True

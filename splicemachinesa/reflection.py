@@ -473,3 +473,4 @@ class SMReflector(BaseReflector):
                 fschema[r[12]]['constrained_columns'].append(r[7])
                 fschema[r[12]]['referred_columns'].append(r[3])
         return [value for key, value in fschema.items()]
+
