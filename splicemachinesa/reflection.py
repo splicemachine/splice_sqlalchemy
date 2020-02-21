@@ -474,28 +474,3 @@ class SMReflector(BaseReflector):
                 fschema[r[12]]['referred_columns'].append(r[3])
         return [value for key, value in fschema.items()]
 
-    @reflection.cache
-    def get_check_constraints(self, connection, table_name, schema=None, **kw):
-        print(connection.__dict__)
-        print(table_name)
-        if schema:
-            print(schema)
-        print(kw.__dict__)
-        raise Exception('WE DON\'T DO THIS YET')
-        # table_data = self._get_table_sql(
-        #     connection, table_name, schema=schema, **kw
-        # )
-        # if not table_data:
-        #     return []
-        # CHECK_PATTERN = r"(?:CONSTRAINT (\w+) +)?" r"CHECK *\( *(.+) *\),? *"
-        # check_constraints = []
-        # # NOTE: we aren't using re.S here because we actually are
-        # # taking advantage of each CHECK constraint being all on one
-        # # line in the table definition in order to delineate.  This
-        # # necessarily makes assumptions as to how the CREATE TABLE
-        # # was emitted.
-        # for match in re.finditer(CHECK_PATTERN, table_data, re.I):
-        #     check_constraints.append(
-        #         {"sqltext": match.group(2), "name": match.group(1)}
-        #     )
-        # return check_constraints
