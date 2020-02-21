@@ -69,55 +69,6 @@ class _SM_Integer(sa_types.Integer):
 
         return process
 
-
-class _SM_String(sa_types.String):
-    """
-    Overrided String class for
-    unicode + posix conversions (MLFlow
-    puts these types into SQLAlchemy
-    frequently and they don't render in
-    VARCHAR types properly)
-    """
-
-    def bind_processor(self, dialect):
-        """
-        Return a conversion function
-        that transforms into
-        Strings
-        :param dialect: the current dialect
-            in use
-        :returns: conversion function
-        """
-
-        def process(value):
-            return None if value is None else bytes(value.encode('utf-8'))
-
-        # we use bytes type for python3 backwards compatibility
-        return process
-
-class _SM_Enum(sa_types.Enum):
-    """
-    Overrided ENUM class for
-    Enum Data Types but it's unsupported by Splice
-    """
-
-    def bind_processor(self, dialect):
-        """
-        Return a conversion function
-        that transforms into
-        Strings
-        :param dialect: the current dialect
-            in use
-        :returns: conversion function
-        """
-        print('processing')
-        def process(value):
-            print('ENUM VALUE:',value)
-            return value
-
-        # we use bytes type for python3 backwards compatibility
-        return process
-
 class _SM_Boolean(sa_types.Boolean):
     """
     An overrided boolean class specifically
@@ -213,9 +164,7 @@ colspecs = {
     sa_types.Boolean: _SM_Boolean,
     sa_types.Date: _SM_Date,
     sa_types.DateTime: _SM_Date,
-    sa_types.String: _SM_String,
     sa_types.Integer: _SM_Integer,
-    sa_types.Enum: _SM_Enum
 }
 
 
@@ -609,24 +558,6 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return self.visit_BLOB(type_)
-
-    def visit_enum(self, *args, **kw):
-        """
-        enum (enumerated object rendering)
-        :param type_: the SQLAlchemy datatype
-            specified by the user
-        :returns: data type rendering
-        """
-        # return self.visit_VARCHAR(*args, **kw)
-        # return super().visit_enum(*args, **kw)
-        raise NotImplementedError(
-            'we don\'t like enums'
-        )
-    def visit_ENUM(self, *args, **kw):
-        raise NotImplementedError(
-            'we don\'t like ENUMS'
-        )
-        # return super().visit_ENUM(*args, **kw)
 
 
 ########################################
