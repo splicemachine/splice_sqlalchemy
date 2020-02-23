@@ -11,7 +11,8 @@ from sqlalchemy.engine import default
 from sqlalchemy.sql import operators, compiler
 from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER, \
     SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP, \
-    VARCHAR, FLOAT
+    VARCHAR, FLOAT, TEXT
+from enum import Enum as PyEnum
 
 from . import constants
 from . import reflection as sm_reflection
@@ -68,6 +69,41 @@ class _SM_Integer(sa_types.Integer):
             return None if value is None else int(value)
 
         return process
+
+
+class _SM_String(sa_types.String):
+    """
+    Overrided String class for
+    unicode + posix conversions (MLFlow
+    puts these types into SQLAlchemy
+    frequently and they don't render in
+    VARCHAR types properly)
+    """
+
+    def __init__(self, *args, **kwargs):
+        if '_enums' in kwargs:
+            kwargs.pop('_enums')
+            kwargs['_expect_unicode'] = False
+        super().__init__(*args, **kwargs)
+
+    def bind_processor(self, dialect):
+        """
+        Return a conversion function
+        that transforms into
+        Strings
+        :param dialect: the current dialect
+            in use
+        :returns: conversion function
+        """
+
+        def process(value):
+            if isinstance(value, PyEnum):
+                value = value._name_
+            return None if value is None else bytes(value.encode('utf-8'))
+
+        # we use bytes type for python3 backwards compatibility
+        return process
+
 
 class _SM_Boolean(sa_types.Boolean):
     """
@@ -165,6 +201,7 @@ colspecs = {
     sa_types.Date: _SM_Date,
     sa_types.DateTime: _SM_Date,
     sa_types.Integer: _SM_Integer,
+    sa_types.String: _SM_String
 }
 
 
@@ -211,6 +248,7 @@ ischema_names = {
     'TIMESTAMP': TIMESTAMP,
     'VARCHAR': VARCHAR,
     'LONGVARCHAR': LONGVARCHAR,
+    'TEXT': TEXT
 }
 
 
@@ -224,7 +262,6 @@ class TypeRegexes:
     # string types
     STR_RX = re.compile('|'.join(['BLOB', 'CLOB', 'CHAR', 'CHARACTER', 'DATE', 'DATETIME',
                                   'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
-
 
 
 class QuotationUtilities:
@@ -425,6 +462,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
+        # convert to text for unicode
         return "VARCHAR(500)" if type_.length in (None, 0) else \
             "VARCHAR(%(length)s)" % {'length': type_.length}
         # TODO: a VARCHAR without a length specification may need to be a CLOB
@@ -690,7 +728,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             sql_pri = "%s%s" % (sql_pri, sql_sec)
             sql_sel = sql_sel[:len(sql_sel) - 1]
             sql = '%s, ( ROW_NUMBER() OVER() ) AS "%s" FROM ( %s ) AS M' % (
-            sql_sel, __rownum, sql_pri)
+                sql_sel, __rownum, sql_pri)
             sql = '%s FROM ( %s ) Z WHERE' % (sql_sel, sql)
 
             # Add limits and offsets
@@ -743,7 +781,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         for param in out:
             # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
-                out[param] = str(out[param])
+                out[param] = str(out[param]).encode('utf-8')
         return out
 
     def visit_function(self, func, result_map=None, **kwargs):
@@ -994,8 +1032,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                     if getattr(constraint, 'uConstraint_as_index', None):
                         if not constraint.name:
                             index_name = "%s_%s_%s" % (
-                            'ukey', self.preparer.format_table(constraint.table),
-                            '_'.join(column.name for column in constraint))
+                                'ukey', self.preparer.format_table(constraint.table),
+                                '_'.join(column.name for column in constraint))
                         else:
                             index_name = constraint.name
                         index = sa_schema.Index(index_name, *(column for column in
@@ -1016,12 +1054,12 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
             create.element._prefixes.insert(temporary_index, 'GLOBAL')  # we require
             # global/local temporary table
         out = super(SpliceMachineDDLCompiler, self).visit_create_table(create)
-         # If a column is a primary key, remove the unique constraint
+        # If a column is a primary key, remove the unique constraint
         for c in create.element.c:
             if c.primary_key and c.unique:
                 pk_name = c.name
                 regxp = re.compile(f',\s*\n.*?UNIQUE \({pk_name}\)')
-                out = re.sub(regxp,'', out)
+                out = re.sub(regxp, '', out)
                 break
         return out
 
@@ -1054,8 +1092,8 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
                 if getattr(create.element, 'uConstraint_as_index', None):
                     if not create.element.name:
                         index_name = "%s_%s_%s" % (
-                        'uk_index', self.preparer.format_table(create.element.table),
-                        '_'.join(column.name for column in create.element))
+                            'uk_index', self.preparer.format_table(create.element.table),
+                            '_'.join(column.name for column in create.element))
                     else:
                         index_name = create.element.name
                     index = sa_schema.Index(index_name, *(column for column in create.element))
@@ -1187,8 +1225,10 @@ class SpliceMachineDialect(default.DefaultDialect):
 
     ischema_names = ischema_names
     supports_char_length = False
+
     supports_unicode_statements = False
     supports_unicode_binds = False
+
     returns_unicode_strings = False
     postfetch_lastrowid = True
     supports_sane_rowcount = True
