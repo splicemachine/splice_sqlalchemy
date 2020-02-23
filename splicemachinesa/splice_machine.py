@@ -99,7 +99,8 @@ class SpliceMachineExecutionContext_sm(SpliceMachineExecutionContext):
 
 class SpliceMachineDialect_sm(SpliceMachineDialect):
     driver = 'splicemachinesa'
-    supports_unicode_statements = True
+    supports_unicode_statements = False
+    supports_unicode_binds = False
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = False
     supports_native_decimal = False
