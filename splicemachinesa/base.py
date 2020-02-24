@@ -684,9 +684,12 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             print(dir(select._whereclause))
         print('COLUMNS:', select._raw_columns)
         if select._raw_columns:
-            print(type(select._raw_columns[0]))
-            print()
-            print(select._raw_columns[0].__dict__)
+            try:
+                print(type(select._raw_columns[0]))
+                print()
+                print(select._raw_columns[0].__dict__)
+            except:
+                pass
         print()
         print()
         return sql
