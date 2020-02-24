@@ -671,7 +671,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
 
     def visit_select(self, select, **kwargs):
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
-        print('GOING TO EXECUTE:')
+        print('GOING TO EXECUTE: ', sql, select.__dict__)
         print(sql)
         return sql
         # """
