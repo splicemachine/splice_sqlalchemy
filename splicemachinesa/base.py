@@ -679,9 +679,10 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
         print('SELECT WHERE CLAUSE:', select._whereclause)
-        print(type(select._whereclause))
+        print(select._whereclause.__dict__)
         print('COLUMNS:', select._raw_columns)
-        print(type(select._raw_columns[0]), select._raw_columns[0].__dict__)
+        print(type(select._raw_columns[0]))
+        print(select._raw_columns[0].name, select._raw_columns[0].source_type)
         print()
         print()
         return sql
