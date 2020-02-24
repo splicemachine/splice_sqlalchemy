@@ -681,7 +681,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         print('SELECT WHERE CLAUSE:', select._whereclause)
         if select._whereclause:
             print(type(select._whereclause))
-            print(dir(select._whereclause))
+            # print(dir(select._whereclause))
         print('COLUMNS:', select._raw_columns)
         if select._raw_columns:
             try:
