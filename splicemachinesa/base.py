@@ -680,16 +680,16 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
         print('SELECT WHERE CLAUSE:', select._whereclause)
         try:
-            print(type(select._whereclause))
-            print(dir(select._whereclause))
+            print('type:',type(select._whereclause))
+            print('dict:',select._whereclause.__dict__)
         except:
             pass
         print('COLUMNS:', select._raw_columns)
         if select._raw_columns:
             try:
-                print(type(select._raw_columns[0]))
+                print('type of rawcolumns:', type(select._raw_columns[0]))
                 print()
-                print(select._raw_columns[0].__dict__)
+                print('dict of rawcolumns:', select._raw_columns[0].__dict__)
             except:
                 pass
         print()
