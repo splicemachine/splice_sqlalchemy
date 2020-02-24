@@ -784,6 +784,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         )
 
         for param in out:
+            print('PARAM', param)
             # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param]).encode('utf-8')
