@@ -670,6 +670,13 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             return ""
 
     def visit_select(self, select, **kwargs):
+        """
+        Overrides the base visit_select function for the specific case of a WHERE (?) IN (?) where the column is not
+        of type CHAR or VARCHAR
+        :param select:
+        :param kwargs:
+        :return: the SQL select statement to execute
+        """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
         print('GOING TO EXECUTE: ', sql, select.__dict__,'\n\n')
         return sql
@@ -781,8 +788,9 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         out = super(SpliceMachineCompiler, self).construct_params(
             params=params, _group_number=_group_number, _check=_check
         )
-
+        print(self.__dict__)
         for param in out:
+            print('PARAM', dir(param))
             # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param]).encode('utf-8')
@@ -795,7 +803,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param result_map: whether or not to return results back to user
         :returns: the parsed function
         """
-        print('FUNCTION', func, kwargs, self.__dict__)
         if func.name.upper() == "AVG":  # average function (needs to be uppercase)
             return "AVG(DOUBLE(%s))" % (self.function_argspec(func, **kwargs))
         elif func.name.upper() == "CHAR_LENGTH":  # char length function
