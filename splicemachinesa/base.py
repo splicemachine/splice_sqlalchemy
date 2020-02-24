@@ -783,7 +783,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         )
 
         for param in out:
-            print('PARAM', param, out[param], type(out[param]))
             # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param]).encode('utf-8')
@@ -796,6 +795,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param result_map: whether or not to return results back to user
         :returns: the parsed function
         """
+        print('FUNCTION', func, kwargs, self.__dict__)
         if func.name.upper() == "AVG":  # average function (needs to be uppercase)
             return "AVG(DOUBLE(%s))" % (self.function_argspec(func, **kwargs))
         elif func.name.upper() == "CHAR_LENGTH":  # char length function
