@@ -670,7 +670,11 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             return ""
 
     def visit_select(self, select, **kwargs):
-        return super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
+        sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
+        raise Exception(str(sql))
+        print('GOING TO EXECUTE:')
+        print(sql)
+        return sql
         # """
         # Generate SQL Select query for Splice Machine
         # DB
