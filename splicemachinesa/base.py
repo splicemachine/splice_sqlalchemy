@@ -678,21 +678,11 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :return: the SQL select statement to execute
         """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
-        print('SELECT WHERE CLAUSE:', select._whereclause)
-        try:
-            print('type:',type(select._whereclause))
-            print('dict:',select._whereclause.__dict__)
-        except:
-            pass
+
         print('COLUMNS:', select._columns_plus_names)
+        print('SQL', type(sql))
         cols_types = {}
-        if select._columns_plus_names:
-        #     try:
-        #         print('type of _columns_plus_names:', type(select._columns_plus_names[0]))
-        #         print()
-        #         print('dict of _columns_plus_names:', select._columns_plus_names[0].__dict__)
-        #     except:
-        #         pass
+        if select._columns_plus_names[0][0]:
             for e in select._columns_plus_names:
                 # print(e[1], e[1]['name'], e[1]['type'])
                 cols_types[e[1].name] = str(e[1].type).split('.')[-1]
