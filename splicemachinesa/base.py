@@ -679,6 +679,13 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
         print('GOING TO EXECUTE: ', sql, select.__dict__,'\n\n')
+        print()
+        import traceback
+        traceback.print_stack()
+        print()
+        print('KWARGS:',kwargs)
+        print('SELECT WHERE CLAUSE:', select._whereclause)
+
         return sql
         # """
         # Generate SQL Select query for Splice Machine
@@ -790,7 +797,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         )
         print(self.__dict__)
         for param in out:
-            print('PARAM', dir(param))
             # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
                 out[param] = str(out[param]).encode('utf-8')
