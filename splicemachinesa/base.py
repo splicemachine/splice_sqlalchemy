@@ -678,11 +678,12 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :return: the SQL select statement to execute
         """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
-
+        print('GOING TO EXECUTE: ', sql, select.__dict__,'\n\n')
+        print()
+        import traceback
+        print()
         print('SELECT WHERE CLAUSE:', select._whereclause)
         print(type(select._whereclause))
-        print(select._whereclause)
-
         return sql
         # """
         # Generate SQL Select query for Splice Machine
