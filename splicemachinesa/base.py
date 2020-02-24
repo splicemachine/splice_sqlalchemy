@@ -684,12 +684,12 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             print('dict:',select._whereclause.__dict__)
         except:
             pass
-        print('COLUMNS:', select._raw_columns)
-        if select._raw_columns:
+        print('COLUMNS:', select._columns_plus_names)
+        if select._columns_plus_names:
             try:
-                print('type of rawcolumns:', type(select._raw_columns[0]))
+                print('type of _columns_plus_names:', type(select._columns_plus_names[0]))
                 print()
-                print('dict of rawcolumns:', select._raw_columns[0].__dict__)
+                print('dict of _columns_plus_names:', select._columns_plus_names[0].__dict__)
             except:
                 pass
         print()
