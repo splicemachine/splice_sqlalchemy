@@ -686,16 +686,16 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             pass
         print('COLUMNS:', select._columns_plus_names)
         cols_types = {}
-        # if select._columns_plus_names:
+        if select._columns_plus_names:
         #     try:
         #         print('type of _columns_plus_names:', type(select._columns_plus_names[0]))
         #         print()
         #         print('dict of _columns_plus_names:', select._columns_plus_names[0].__dict__)
         #     except:
         #         pass
-        for e in select._columns_plus_names:
-            # print(e[1], e[1]['name'], e[1]['type'])
-            cols_types[e[1].__dict__['name']] = str(e[1].__dict__['type']).split('.')[-1]
+            for e in select._columns_plus_names:
+                # print(e[1], e[1]['name'], e[1]['type'])
+                cols_types[e[1].name] = str(e[1].type).split('.')[-1]
 
         # print(cols_types)
 
