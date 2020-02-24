@@ -678,13 +678,10 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :return: the SQL select statement to execute
         """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
-        print('GOING TO EXECUTE: ', sql, select.__dict__,'\n\n')
-        print()
-        import traceback
-        traceback.print_stack()
-        print()
-        print('KWARGS:',kwargs)
+
         print('SELECT WHERE CLAUSE:', select._whereclause)
+        print(type(select._whereclause))
+        print(select._whereclause)
 
         return sql
         # """
@@ -795,7 +792,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         out = super(SpliceMachineCompiler, self).construct_params(
             params=params, _group_number=_group_number, _check=_check
         )
-        print(self.__dict__)
         for param in out:
             # unicode won't be hit in Python3 (short-circuit execution)
             if not IS_PYTHON_3 and (isinstance(out[param], str) or isinstance(out[param], unicode)):
