@@ -694,9 +694,10 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         #     except:
         #         pass
         for e in select._columns_plus_names:
-            cols_types[e[1].name] = str(type(e[1].type)).split('.')[-1]
+            print(e[1])
+            # cols_types[e[1].name] = str(type(e[1].type)).split('.')[-1]
 
-        print(cols_types)
+        # print(cols_types)
 
         print()
         print()
