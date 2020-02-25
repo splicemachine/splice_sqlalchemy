@@ -707,9 +707,9 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
                     after_WITH_clause[last_param_index] += ')' # Finish the IN clause
 
             where_sql = ' '.join(after_WITH_clause)
-            full_sql = sql + ' WHERE ' + where_sql
+            sql = sql + ' WHERE ' + where_sql
 
-        return full_sql
+        return sql
         # """
         # Generate SQL Select query for Splice Machine
         # DB
