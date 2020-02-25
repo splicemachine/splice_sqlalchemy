@@ -678,36 +678,40 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param kwargs:
         :return: the SQL select statement to execute
         """
-        sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
-        col_types = {}
-        if select._columns_plus_names[0][0]:
-            for e in select._columns_plus_names:
-                # print(e[1], e[1]['name'], e[1]['type'])
-                col_types[e[1].name] = str(e[1].type).split('.')[-1]
+        try:
+            sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
+            col_types = {}
+            if select._columns_plus_names[0][0]:
+                for e in select._columns_plus_names:
+                    col_types[e[1].name] = str(e[1].type).split('.')[-1]
 
-        # Handle WHERE IN clauses for values that are numeric types
-        if 'WHERE' in sql:
-            before_WITH_clause,after_WITH_clause = sql.split('WHERE ')
-            after_WITH_clause = after_WITH_clause.split(' ')
-            IN_indicies = [i for i,c in enumerate(after_WITH_clause) if c=='IN']
-            for e, i in enumerate(IN_indicies):
-                # Word before the IN is the full column name
-                full_col = after_WITH_clause[i-1]
-                col_name = full_col.split('.')[-1] if '.' in full_col else full_col
-                # Splice can handle FLOAT to INT comparisons
-                if col_types.get(col_name) == 'INTEGER': #(BIGINT, BigInteger, INT, INTEGER, Integer, FLOAT, Float, DECIMAL, decimal):
-                    # Word after the IN is the ? param
-                    after_WITH_clause[i+1] = f'(CAST(? as FLOAT)'
-                    last_param_index = i+1
-                    for next_param in range(i+2,IN_indicies[e+1]): # There may be more than one parameter in the IN clause
-                        if '?' in after_WITH_clause[next_param]:
-                            after_WITH_clause[next_param] = f',CAST(? as FLOAT)'
-                            last_param_index = next_param
-                    after_WITH_clause[last_param_index] += ')' # Finish the IN clause
+            # Handle WHERE IN clauses for values that are numeric types
+            if 'WHERE' in sql:
+                before_WITH_clause,after_WITH_clause = sql.split('WHERE ')
+                after_WITH_clause = after_WITH_clause.split(' ')
+                IN_indicies = [i for i,c in enumerate(after_WITH_clause) if c=='IN']
+                for e, i in enumerate(IN_indicies):
+                    # Word before the IN is the full column name
+                    full_col = after_WITH_clause[i-1]
+                    col_name = full_col.split('.')[-1] if '.' in full_col else full_col
+                    # Splice can handle FLOAT to INT comparisons
+                    if col_types.get(col_name) == 'INTEGER': #(BIGINT, BigInteger, INT, INTEGER, Integer, FLOAT, Float, DECIMAL, decimal):
+                        # Word after the IN is the ? param
+                        after_WITH_clause[i+1] = f'(CAST(? as FLOAT)'
+                        last_param_index = i+1
+                        for next_param in range(i+2,IN_indicies[e+1]): # There may be more than one parameter in the IN clause
+                            if '?' in after_WITH_clause[next_param]:
+                                after_WITH_clause[next_param] = f',CAST(? as FLOAT)'
+                                last_param_index = next_param
+                        after_WITH_clause[last_param_index] += ')' # Finish the IN clause
 
-            where_sql = ' '.join(after_WITH_clause)
-            sql = before_WITH_clause + ' WHERE ' + where_sql
-        return sql
+                where_sql = ' '.join(after_WITH_clause)
+                sql = before_WITH_clause + ' WHERE ' + where_sql
+            return sql
+        except:
+            import traceback
+            traceback.print_exc()
+            raise Exception
         # """
         # Generate SQL Select query for Splice Machine
         # DB
