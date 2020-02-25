@@ -684,7 +684,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             for e in select._columns_plus_names:
                 # print(e[1], e[1]['name'], e[1]['type'])
                 col_types[e[1].name] = str(e[1].type).split('.')[-1]
-                print(type(e[1].type))
 
         # Handle WHERE IN clauses for values that are numeric types
         if 'WHERE' in sql:
@@ -707,8 +706,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
                     after_WITH_clause[last_param_index] += ')' # Finish the IN clause
 
             where_sql = ' '.join(after_WITH_clause)
-            sql = sql + ' WHERE ' + where_sql
-
+            sql = before_WITH_clause + ' WHERE ' + where_sql
         return sql
         # """
         # Generate SQL Select query for Splice Machine
