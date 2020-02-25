@@ -11,7 +11,7 @@ from sqlalchemy.engine import default
 from sqlalchemy.sql import operators, compiler
 from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER, \
     SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP, \
-    VARCHAR, FLOAT, TEXT
+    VARCHAR, FLOAT, TEXT, INT
 from enum import Enum as PyEnum
 
 from . import constants
@@ -679,25 +679,26 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :return: the SQL select statement to execute
         """
         sql = super(SpliceMachineCompiler, self).visit_select(select, **kwargs)
-
-        print('COLUMNS:', select._columns_plus_names)
-        print('SQL', type(sql))
-        cols_types = {}
+        col_types = {}
         if select._columns_plus_names[0][0]:
             for e in select._columns_plus_names:
                 # print(e[1], e[1]['name'], e[1]['type'])
-                cols_types[e[1].name] = str(e[1].type).split('.')[-1]
-                print(e[1].name, type(e[1].type))
-
-        # print(cols_types)
+                col_types[e[1].name] = str(e[1].type).split('.')[-1]
 
         # Find all WHERE IN comparisons and explicitly cast if column is numeric
-        if 'WHERE' in sql and 'IN' in sql:
-            _where_conditions = sql.split('WHERE')[-1]
+        before, x = sql.split('WHERE ')
+        IN_indicies = [i for i,c in enumerate(x) if c=='IN']
+        for i in IN_indicies:
+            full_col = x[i-1]
+            param = x[i+1]
+            col_name = full_col.split('.')[-1] if '.' in full_col else full_col
+            #Splice can handle FLOAT to INT comparisons
+            if col_types.get(col_name) in (BIGINT, REAL, INT, INTEGER, FLOAT, DECIMAL, SMALLINT, NUMERIC):
+                x[i+1] = f'CAST({param} as FLOAT)'
+        where_sql = ' '.join(x)
+        full_sql = before + 'WHERE ' + where_sql
 
-
-
-        return sql
+        return full_sql
         # """
         # Generate SQL Select query for Splice Machine
         # DB
