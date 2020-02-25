@@ -706,7 +706,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
                         after_WITH_clause[last_param_index] += ')' # Finish the IN clause
 
                 where_sql = ' '.join(after_WITH_clause)
-                sql = before_WITH_clause + ' WHERE ' + where_sql
+                sql = before_WITH_clause + 'WHERE ' + where_sql
             return sql
         except:
             import traceback
