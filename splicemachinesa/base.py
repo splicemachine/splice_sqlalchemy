@@ -684,21 +684,21 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             for e in select._columns_plus_names:
                 # print(e[1], e[1]['name'], e[1]['type'])
                 col_types[e[1].name] = str(e[1].type).split('.')[-1]
-
+                print(type(e[1].type))
         # Find all WHERE IN comparisons and explicitly cast if column is numeric
-        before, x = sql.split('WHERE ')
-        IN_indicies = [i for i,c in enumerate(x) if c=='IN']
-        for i in IN_indicies:
-            full_col = x[i-1]
-            param = x[i+1]
-            col_name = full_col.split('.')[-1] if '.' in full_col else full_col
-            #Splice can handle FLOAT to INT comparisons
-            if col_types.get(col_name) in (BIGINT, REAL, INT, INTEGER, FLOAT, DECIMAL, SMALLINT, NUMERIC):
-                x[i+1] = f'CAST({param} as FLOAT)'
-        where_sql = ' '.join(x)
-        full_sql = before + 'WHERE ' + where_sql
+        # before, x = sql.split('WHERE ')
+        # IN_indicies = [i for i,c in enumerate(x) if c=='IN']
+        # for i in IN_indicies:
+        #     full_col = x[i-1]
+        #     param = x[i+1]
+        #     col_name = full_col.split('.')[-1] if '.' in full_col else full_col
+        #     #Splice can handle FLOAT to INT comparisons
+        #     if col_types.get(col_name) in (BIGINT, REAL, INT, INTEGER, FLOAT, DECIMAL, SMALLINT, NUMERIC):
+        #         x[i+1] = f'CAST({param} as FLOAT)'
+        # where_sql = ' '.join(x)
+        # full_sql = before + 'WHERE ' + where_sql
 
-        return full_sql
+        return sql
         # """
         # Generate SQL Select query for Splice Machine
         # DB
