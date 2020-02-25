@@ -673,6 +673,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         """
         Overrides the base visit_select function for the specific case of a WHERE (?) IN (?) where the column is not
         of type CHAR or VARCHAR
+        Splice does not support native casting for WHERE IN comparisons, so we need to add an explicit cast if necessary
         :param select:
         :param kwargs:
         :return: the SQL select statement to execute
@@ -686,11 +687,16 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             for e in select._columns_plus_names:
                 # print(e[1], e[1]['name'], e[1]['type'])
                 cols_types[e[1].name] = str(e[1].type).split('.')[-1]
+                print(e[1].name, type(e[1].type))
 
         # print(cols_types)
 
-        print()
-        print()
+        # Find all WHERE IN comparisons and explicitly cast if column is numeric
+        if 'WHERE' in sql and 'IN' in sql:
+            _where_conditions = sql.split('WHERE')[-1]
+
+
+
         return sql
         # """
         # Generate SQL Select query for Splice Machine
