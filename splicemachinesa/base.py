@@ -671,8 +671,7 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
 
     def visit_select(self, select, **kwargs):
         """
-        Overrides the base visit_select function for the specific case of a WHERE (?) IN (?) where the column is not
-        of type CHAR or VARCHAR
+        Function for handling the creation of SELECT statements
         Splice does not support native casting for WHERE IN comparisons, so we need to add an explicit cast if necessary
         :param select:
         :param kwargs:
@@ -684,108 +683,11 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
             if select._columns_plus_names[0][0]:
                 for e in select._columns_plus_names:
                     col_types[e[1].name] = str(e[1].type).split('.')[-1]
-
-            # Handle WHERE IN clauses for values that are numeric types
-            if 'WHERE' in sql:
-                before_WITH_clause,after_WITH_clause = sql.split('WHERE ')
-                after_WITH_clause = after_WITH_clause.split(' ')
-                IN_indicies = [i for i,c in enumerate(after_WITH_clause) if c=='IN']
-                for e, i in enumerate(IN_indicies):
-                    # Word before the IN is the full column name
-                    full_col = after_WITH_clause[i-1]
-                    col_name = full_col.split('.')[-1] if '.' in full_col else full_col
-                    # Splice can handle FLOAT to INT comparisons
-                    if col_types.get(col_name) == 'INTEGER': #(BIGINT, BigInteger, INT, INTEGER, Integer, FLOAT, Float, DECIMAL, decimal):
-                        # Word after the IN is the ? param
-                        after_WITH_clause[i+1] = f'(CAST(? as FLOAT)'
-                        last_param_index = i+1
-                        for next_param in range(i+2,IN_indicies[e+1]): # There may be more than one parameter in the IN clause
-                            if '?' in after_WITH_clause[next_param]:
-                                after_WITH_clause[next_param] = f',CAST(? as INT)'
-                                last_param_index = next_param
-                        after_WITH_clause[last_param_index] += ')' # Finish the IN clause
-
-                where_sql = ' '.join(after_WITH_clause)
-                sql = before_WITH_clause + 'WHERE ' + where_sql
             return sql
         except:
             import traceback
             traceback.print_exc()
             raise Exception
-        # """
-        # Generate SQL Select query for Splice Machine
-        # DB
-        # :param select: select query object
-        # :returns: the correct SQL Select query
-        # """
-        # limit, offset = select._limit, select._offset  # extract offset and limit
-        # # from user arguments in SQLAlchemy class
-        # sql_ori = compiler.SQLCompiler.visit_select(self, select, **kwargs)
-        # # call parent function to generate original SQL command
-        # if offset is not None:
-        #     # get row numbers for limit via dummy val offsets
-        #     __rownum = 'Z.__ROWNUM'
-        #     sql_split = re.split("[\s+]FROM ", sql_ori, 1)
-        #     sql_sec = ""
-        #     sql_sec = " \nFROM %s " % (sql_split[1])
-        #
-        #     dummyVal = "Z.__SM__"
-        #     sql_pri = ""
-        #
-        #     # distinct select handling
-        #     sql_sel = "SELECT "
-        #     if select._distinct:
-        #         sql_sel = "SELECT DISTINCT "
-        #
-        #     # Parse built in functions
-        #     sql_select_token = sql_split[0].split(",")
-        #     i = 0
-        #     while (i < len(sql_select_token)):
-        #         if sql_select_token[i].count("TIMESTAMP(DATE(SUBSTR(CHAR(") == 1:
-        #             sql_sel = "%s \"%s%d\"," % (sql_sel, dummyVal, i + 1)
-        #             sql_pri = '%s %s,%s,%s,%s AS "%s%d",' % (
-        #                 sql_pri,
-        #                 sql_select_token[i],
-        #                 sql_select_token[i + 1],
-        #                 sql_select_token[i + 2],
-        #                 sql_select_token[i + 3],
-        #                 dummyVal, i + 1)
-        #             i = i + 4
-        #             continue
-        #
-        #         # select them with specific names via AS clause
-        #         if sql_select_token[i].count(" AS ") == 1:
-        #             temp_col_alias = sql_select_token[i].split(" AS ")
-        #             sql_pri = '%s %s,' % (sql_pri, sql_select_token[i])
-        #             sql_sel = "%s %s," % (sql_sel, temp_col_alias[1])
-        #             i = i + 1
-        #             continue
-        #
-        #         sql_pri = '%s %s AS "%s%d",' % (sql_pri, sql_select_token[i], dummyVal, i + 1)
-        #         sql_sel = "%s \"%s%d\"," % (sql_sel, dummyVal, i + 1)
-        #         i = i + 1
-        #
-        #     # Parse SQL Query Partitions
-        #     sql_pri = sql_pri[:len(sql_pri) - 1]
-        #     sql_pri = "%s%s" % (sql_pri, sql_sec)
-        #     sql_sel = sql_sel[:len(sql_sel) - 1]
-        #     sql = '%s, ( ROW_NUMBER() OVER() ) AS "%s" FROM ( %s ) AS M' % (
-        #         sql_sel, __rownum, sql_pri)
-        #     sql = '%s FROM ( %s ) Z WHERE' % (sql_sel, sql)
-        #
-        #     # Add limits and offsets
-        #     if offset is not 0:
-        #         sql = '%s "%s" > %d' % (sql, __rownum, offset)
-        #     if offset is not 0 and limit is not None:
-        #         sql = '%s AND ' % (sql)
-        #     if limit is not None:
-        #         sql = '%s "%s" <= %d' % (sql, __rownum, offset + limit)
-        #     out = ("( %s )" % (sql,))
-        #     return out
-        # else:
-        #     # original sql select query if offset is not specified
-        #     return sql_ori
-
 
     def visit_sequence(self, sequence):
         """
