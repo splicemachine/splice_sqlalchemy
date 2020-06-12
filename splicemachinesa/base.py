@@ -70,6 +70,28 @@ class _SM_Integer(sa_types.Integer):
 
         return process
 
+class _SM_BigInteger(sa_types.BigInteger):
+    """
+    Overrided integer data type
+    that makes sure that types passed
+    in are integers before being binded
+    """
+
+    def bind_processor(self, dialect):
+        """
+        Returns a conversion function
+        that converts input values to
+        Python ints before binding
+        :param dialect: the current dialect
+            in use
+        :returns: conversion function
+        """
+
+        def process(value):
+            return None if value is None else int(value)
+
+        return process
+
 
 class _SM_String(sa_types.String):
     """
@@ -201,7 +223,8 @@ colspecs = {
     sa_types.Date: _SM_Date,
     sa_types.DateTime: _SM_Date,
     sa_types.Integer: _SM_Integer,
-    sa_types.String: _SM_String
+    sa_types.String: _SM_String,
+    sa_types.BigInteger: _SM_BigInteger
 }
 
 
@@ -258,7 +281,7 @@ class TypeRegexes:
     default type converters
     """
     # numeric types
-    NUM_RX = re.compile('|'.join(['INT', 'DECIMAL', 'NUMERIC', 'REAL', 'DOUBLE', 'FLOAT']))
+    NUM_RX = re.compile('|'.join(['INT', 'BIGINT', 'DECIMAL', 'NUMERIC', 'REAL', 'DOUBLE', 'FLOAT']))
     # string types
     STR_RX = re.compile('|'.join(['BLOB', 'CLOB', 'CHAR', 'CHARACTER', 'DATE', 'DATETIME',
                                   'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
@@ -451,7 +474,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
-        return "BLOB(1M)" if type_.length in (None, 0) else \
+        return "BLOB(2G)" if type_.length in (None, 0) else \
             "BLOB(%(length)s)" % {'length': type_.length}
         # use function with size if specified
 
@@ -547,6 +570,15 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
         :returns: data type rendering
         """
         return self.visit_INT(type_)
+    
+    def visit_biginteger(self, type_):
+        """
+        integer rendering
+        :param type_: the SQLAlchemy datatype
+            specified by the user
+        :returns: data type rendering
+        """
+        return self.visit_BIGINT(type_)
 
     def visit_boolean(self, type_):
         """
