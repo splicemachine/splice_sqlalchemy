@@ -77,6 +77,22 @@ class _SM_BigInteger(sa_types.BigInteger):
     in are integers before being binded
     """
 
+    def result_processor(self, dialect, coltype):
+        """
+        Return a conversion function for
+        processing row values
+        :param dialect: the current dialect in use
+        :param coltype: the column type in DB Schema
+            from pyODBC.connection.cursor.description
+
+        :returns: func for parsing boolean value of integer
+        """
+
+        def process(value):
+            return None if value is None else int(value)
+
+        return process
+
     def bind_processor(self, dialect):
         """
         Returns a conversion function
@@ -435,7 +451,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
-        return "BIGINT"
+        return "DECIMAL(31,0)"
 
     def visit_FLOAT(self, type_):
         """
