@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+from setuptools.command.install import install as Install
+from platform import system
+from subprocess import check_call as run_bash
 
 """
 Copyright 2019 Splice Machine Inc.
@@ -18,7 +21,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = '0.1.4'
+VERSION = '0.1.5.1'
+ODBC_VERSION = '2.8.66.0'
+
+def bash(command):
+    run_bash(command.split())
+
+class CustomInstall(Install):
+    linux_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/Linux64/splice_odbc_linux64-2.8.66.0.tar.gz'
+    window_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/Win64/splice_odbc_setup_64bit_2.8.66.0.msi'
+    mac_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-2.8.66.0.tar.gz'
+    nix_url = {'Darwin': mac_url, 'Linux': linux_url}
+    def nix_hanlder(self):
+        url = CustomInstall.nix_url[system()]
+        file_name = url.split('/')[-1]
+        bash('mkdir -p /tmp')
+        bash('curl -kLs {url} -o /tmp/{file_name}'.format(url=url,file_name=file_name))
+        bash('tar -xzf /tmp/{} -C /tmp'.format(file_name))
+        driver_name = 'libsplice_odbc64.dylib' if system()=='Darwin' else 'lib64/libsplice_odbc.so'
+        driver_location = '/Library/ODBC/SpliceMachine/' if system()=='Darwin' else '/usr/local/splice'
+        file_name = file_name.rstrip('.tar.gz')
+        bash('mkdir -p {}'.format(driver_location))
+        bash('mv -f /tmp/{file_name}/{driver_name} {driver_location}'.format(file_name=file_name, driver_name=driver_name,
+                                                                          driver_location=driver_location))
+
+    def windows_handler(self):
+        pass
+
+    def run(self):
+        Install.run(self)
+        {'Linux': self.nix_hanlder,
+         'Windows': self.windows_handler,
+         'Darwin': self.nix_hanlder}[system()]()
+
 
 setup(
     name='splicemachinesa',
@@ -29,7 +64,7 @@ setup(
     description='SQLAlchemy support for Splice Machine RDBMS',
     author='Amrit Baveja',
     author_email='abaveja@splicemachine.com',
-    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-{version}.dev0.tar.gz'.format(
+    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-{version}.dev1.tar.gz'.format(
 	version=VERSION),
     platforms='All',
     install_requires=[
@@ -55,5 +90,6 @@ setup(
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
     zip_safe=False,
-    tests_require=['nose >= 0.11']
+    tests_require=['nose >= 0.11'],
+    cmdclass={'install': CustomInstall}
 )
