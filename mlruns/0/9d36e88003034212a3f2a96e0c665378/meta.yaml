@@ -1,0 +1,15 @@
+artifact_uri: file:///Users/benepstein/Documents/Github/splice_sqlalchemy/mlruns/0/9d36e88003034212a3f2a96e0c665378/artifacts
+end_time: 1594046687781
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+name: ''
+run_id: 9d36e88003034212a3f2a96e0c665378
+run_uuid: 9d36e88003034212a3f2a96e0c665378
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1594046687764
+status: 3
+tags: []
+user_id: benepstein
