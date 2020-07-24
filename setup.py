@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = '0.1.5.1'
+VERSION = '0.1.6'
 ODBC_VERSION = '2.8.66.0'
 
 def bash(command):
@@ -44,6 +44,9 @@ class CustomInstall(Install):
         bash('mkdir -p {}'.format(driver_location))
         bash('mv -f /tmp/{file_name}/{driver_name} {driver_location}'.format(file_name=file_name, driver_name=driver_name,
                                                                           driver_location=driver_location))
+
+        bash('mkdir -p /usr/local/splice/errormessages/en-US/')
+        bash('cp /tmp/{file_name}/errormessages/en-US/*.xml /usr/local/splice/errormessages/en-US/'.format(file_name=file_name) )
 
     def windows_handler(self):
         pass
