@@ -45,6 +45,9 @@ class CustomInstall(Install):
         bash('mv -f /tmp/{file_name}/{driver_name} {driver_location}'.format(file_name=file_name, driver_name=driver_name,
                                                                           driver_location=driver_location))
 
+        bash('mkdir -p /usr/local/splice/errormessages/en-US/')
+        bash('cp /tmp/{file_name}/errormessages/en-US/*.xml /usr/local/splice/errormessages/en-US/'.format(file_name=file_name) )
+
     def windows_handler(self):
         pass
 
