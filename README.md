@@ -5,6 +5,7 @@ SQLAlchemy applications with Splice Machine
 * SQLAlchemy exposes a uniform API for database-backed applications,
 which can be easily used with Splice Machine via this adaptor
 * Supported on Splice Machine Versions >= 2.8.0.1920
+* Requires Python 3.6+
 ## Installation:
 
 There are two ways to install this Driver. With and without ODBC Driver custom installation. We recommend without.
@@ -13,13 +14,31 @@ There are two ways to install this Driver. With and without ODBC Driver custom i
 #### Mac
 `sudo pip install splicemachinesa`
 #### Linux
-First ensure you have the following packages installed. They are necessary for pyodbc:
+First ensure you have the following packages installed. They are necessary for pyodbc.<br>
+Ubuntu:
 * build-essential
 * libssl-dev
 * libffi-dev
+* unixodbc
 * unixodbc-dev
+* python3-dev
+* curl
+* unzip
+* iodbc
 
-You can install them with apt or yum.<br>
+`sudo apt -y update && sudo apt -y upgrade && sudo apt -y install build-essential libssl-dev libffi-dev unixodbc unixodbc-dev python3-dev curl unzip iodbc`
+
+Centos:
+* unzip
+* gcc
+* openssl-devel
+* gcc-c++
+* unixODBC-devel
+* unixODBC
+* python3-devel
+
+`sudo yum -y update && sudo yum -y install unzip gcc openssl-devel gcc-c++ unixODBC-devel unixODBC python3-devel`
+
 Then run `sudo pip install splicemachinesa`
 <br>
 
