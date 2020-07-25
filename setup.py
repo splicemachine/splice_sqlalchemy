@@ -46,7 +46,8 @@ class CustomInstall(Install):
                                                                           driver_location=driver_location))
 
         bash('mkdir -p /usr/local/splice/errormessages/en-US/')
-        bash('cp /tmp/{file_name}/errormessages/en-US/*.xml /usr/local/splice/errormessages/en-US/'.format(file_name=file_name) )
+        for xml in ["ODBCMessages", "SpliceMessages", "SQLEngineMessages"]:
+            bash('cp /tmp/{file_name}/errormessages/en-US/{xml}.xml /usr/local/splice/errormessages/en-US/'.format(file_name=file_name, xml=xml) )
 
     def windows_handler(self):
         pass
