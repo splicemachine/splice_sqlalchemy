@@ -8,7 +8,7 @@ which can be easily used with Splice Machine via this adaptor
 * Requires Python 3.6+
 ## Installation:
 
-There are two ways to install this Driver. With and without ODBC Driver custom installation. We recommend without.
+There are two ways to install this Driver. With and without ODBC Driver custom installation. We recommend without. When running these commands, you must either use sudo or have root access.
 
 ### Without ODBC Driver Custom Installation
 #### Mac
