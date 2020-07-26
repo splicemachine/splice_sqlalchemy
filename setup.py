@@ -4,6 +4,7 @@ from setuptools import setup
 from setuptools.command.install import install as Install
 from platform import system
 from subprocess import check_call as run_bash
+import os
 
 """
 Copyright 2019 Splice Machine Inc.
@@ -21,7 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = '0.1.6'
+VERSION = '0.1.7'
 ODBC_VERSION = '2.8.66.0'
 
 def bash(command):
@@ -39,15 +40,16 @@ class CustomInstall(Install):
         bash('curl -kLs {url} -o /tmp/{file_name}'.format(url=url,file_name=file_name))
         bash('tar -xzf /tmp/{} -C /tmp'.format(file_name))
         driver_name = 'libsplice_odbc64.dylib' if system()=='Darwin' else 'lib64/libsplice_odbc.so'
-        driver_location = '/Library/ODBC/SpliceMachine/' if system()=='Darwin' else '/usr/local/splice'
+        driver_location = '/Library/ODBC/SpliceMachine' if system()=='Darwin' else '/usr/local/splice'
         file_name = file_name.rstrip('.tar.gz')
         bash('mkdir -p {}'.format(driver_location))
         bash('mv -f /tmp/{file_name}/{driver_name} {driver_location}'.format(file_name=file_name, driver_name=driver_name,
                                                                           driver_location=driver_location))
 
-        bash('mkdir -p /usr/local/splice/errormessages/en-US/')
-        for xml in ["ODBCMessages", "SpliceMessages", "SQLEngineMessages"]:
-            bash('cp /tmp/{file_name}/errormessages/en-US/{xml}.xml /usr/local/splice/errormessages/en-US/'.format(file_name=file_name, xml=xml) )
+        bash('mkdir -p {}/errormessages/en-US/'.format(driver_location))
+        err_files = os.popen('ls /tmp/{}/errormessages/en-US'.format(file_name)).read().split()
+        for xml in err_files:
+            bash('cp /tmp/{file_name}/errormessages/en-US/{xml} {driver_location}/errormessages/en-US/'.format(file_name=file_name, xml=xml,driver_location=driver_location))
 
     def windows_handler(self):
         pass
@@ -68,7 +70,7 @@ setup(
     description='SQLAlchemy support for Splice Machine RDBMS',
     author='Amrit Baveja',
     author_email='abaveja@splicemachine.com',
-    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-{version}.dev1.tar.gz'.format(
+    download_url='https://splice-releases.s3.amazonaws.com/splice-sqlalchemy/splicemachinesa-{version}.dev0.tar.gz'.format(
 	version=VERSION),
     platforms='All',
     install_requires=[
