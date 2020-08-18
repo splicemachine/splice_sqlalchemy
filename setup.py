@@ -22,7 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = '0.1.7'
+VERSION = '0.1.8'
 ODBC_VERSION = '2.8.66.0'
 
 def bash(command):
@@ -49,7 +49,7 @@ class CustomInstall(Install):
         bash('mkdir -p {}/errormessages/en-US/'.format(driver_location))
         err_files = os.popen('ls /tmp/{}/errormessages/en-US'.format(file_name)).read().split()
         for xml in err_files:
-            bash('cp /tmp/{file_name}/errormessages/en-US/{xml} {driver_location}/errormessages/en-US/'.format(file_name=file_name, xml=xml,driver_location=driver_location))
+            bash('cp /tmp/{file_name}/errormessages/en-US/{xml} {driver_location}/en-US/'.format(file_name=file_name, xml=xml,driver_location=driver_location))
 
     def windows_handler(self):
         pass
