@@ -210,14 +210,6 @@ colspecs = {
 #     Data Types Specific To Splice    #
 #                                      #
 ########################################
-class DOUBLE(sa_types.Numeric):
-    """
-    Double Data Type --
-    same methods as numeric generic
-    data type i.e. (Integer)
-    """
-    __visit_name__ = 'DOUBLE'
-
 
 class LONGVARCHAR(sa_types.VARCHAR):
     """
@@ -242,7 +234,7 @@ ischema_names = {
     'DECIMAL': DECIMAL,
     'NUMERIC': NUMERIC,
     'REAL': REAL,
-    'DOUBLE': DOUBLE,
+    'DOUBLE': FLOAT,
     'FLOAT': FLOAT,
     'TIME': TIME,
     'TIMESTAMP': TIMESTAMP,

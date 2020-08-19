@@ -22,7 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = '0.1.7'
+VERSION = '0.1.7.1'
 ODBC_VERSION = '2.8.66.0'
 
 def bash(command):
@@ -34,22 +34,23 @@ class CustomInstall(Install):
     mac_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-2.8.66.0.tar.gz'
     nix_url = {'Darwin': mac_url, 'Linux': linux_url}
     def nix_hanlder(self):
+        home = os.environ.get('HOME', '~') + '/splice'
         url = CustomInstall.nix_url[system()]
         file_name = url.split('/')[-1]
         bash('mkdir -p /tmp')
         bash('curl -kLs {url} -o /tmp/{file_name}'.format(url=url,file_name=file_name))
         bash('tar -xzf /tmp/{} -C /tmp'.format(file_name))
         driver_name = 'libsplice_odbc64.dylib' if system()=='Darwin' else 'lib64/libsplice_odbc.so'
-        driver_location = '/Library/ODBC/SpliceMachine' if system()=='Darwin' else '/usr/local/splice'
+        # driver_location = '/Library/ODBC/SpliceMachine' if system()=='Darwin' else '/usr/local/splice'
         file_name = file_name.rstrip('.tar.gz')
-        bash('mkdir -p {}'.format(driver_location))
+        bash('mkdir -p {}'.format(home))
         bash('mv -f /tmp/{file_name}/{driver_name} {driver_location}'.format(file_name=file_name, driver_name=driver_name,
-                                                                          driver_location=driver_location))
+                                                                          driver_location=home))
 
-        bash('mkdir -p {}/errormessages/en-US/'.format(driver_location))
+        bash('mkdir -p {}/errormessages/en-US/'.format(home))
         err_files = os.popen('ls /tmp/{}/errormessages/en-US'.format(file_name)).read().split()
         for xml in err_files:
-            bash('cp /tmp/{file_name}/errormessages/en-US/{xml} {driver_location}/errormessages/en-US/'.format(file_name=file_name, xml=xml,driver_location=driver_location))
+            bash('cp /tmp/{file_name}/errormessages/en-US/{xml} {driver_location}/en-US/'.format(file_name=file_name, xml=xml,driver_location=home))
 
     def windows_handler(self):
         pass

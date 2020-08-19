@@ -20,9 +20,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+HOME = os.environ.get('HOME','~') + '/splice'
 DRIVER_LOCATIONS = {
-    'Darwin': '/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib',
-    'Linux': '/usr/local/splice/libsplice_odbc.so'
+    'Darwin': f'{HOME}/libsplice_odbc64.dylib',
+    'Linux': f'{HOME}/libsplice_odbc.so'
 }
 def splice_connect(UID, PWD, URL, PORT='1527', SSL='basic', Driver=None):
     Driver = Driver or DRIVER_LOCATIONS[system()]
