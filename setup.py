@@ -23,7 +23,7 @@ limitations under the License.
 """
 
 
-VERSION = '0.1.9'
+VERSION = '0.2.0'
 ODBC_VERSION = '2.8.66.0'
 
 def bash(command):
@@ -48,7 +48,7 @@ class CustomInstall(Install):
         bash('mv -f /tmp/{file_name}/{driver_name} {driver_location}'.format(file_name=file_name, driver_name=driver_name,
                                                                           driver_location=home))
 
-        bash('mkdir -p {}/errormessages/en-US/'.format(home))
+        bash('mkdir -p {}/en-US/'.format(home))
         err_files = os.popen('ls /tmp/{}/errormessages/en-US'.format(file_name)).read().split()
         for xml in err_files:
             bash('cp /tmp/{file_name}/errormessages/en-US/{xml} {driver_location}/en-US/'.format(file_name=file_name, xml=xml,driver_location=home))
