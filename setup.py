@@ -23,7 +23,7 @@ limitations under the License.
 """
 
 
-VERSION = '0.2.0'
+VERSION = '0.2.0.0.1'
 ODBC_VERSION = '2.8.66.0'
 
 def bash(command):

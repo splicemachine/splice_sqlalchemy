@@ -474,3 +474,19 @@ class SMReflector(BaseReflector):
                 fschema[r[12]]['referred_columns'].append(r[3])
         return [value for key, value in fschema.items()]
 
+    @reflection.cache
+    def get_indexes(self, connection, table_name, schema=None, **kw):
+        """
+        Get index for the table
+        :param connection: ODBC cnxn
+        :param table_name: the name of the table to extract keys from
+        :param schema: schema where table is
+        :returns: list of incoming columns
+        """
+        current_schema = self.capitalize(schema or self.default_schema_name)
+        table_name = self.capitalize(table_name)
+
+        indexes = []
+
+
+        return indexes
