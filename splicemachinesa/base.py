@@ -1237,6 +1237,10 @@ class SpliceMachineDialect(default.DefaultDialect):
         return self._reflector.get_columns(
             connection, table_name, schema=schema, **kw)
 
+    def get_indexes(self, connection, table_name, schema=None, **kw):
+        return self._reflector.get_indexes(
+            connection, table_name, schema=schema, **kw)
+
     def get_primary_keys(self, connection, table_name, schema=None, **kw):
         return self._reflector.get_primary_keys(
             connection, table_name, schema=schema, **kw)
