@@ -544,16 +544,18 @@ class SMReflector(BaseReflector):
            'column_names': ['TABLEID']
           }]
 
-        :return: None, operation applied inplace
+        :return: List of merged dictionaries
         """
 
+        merged_list = []
         for d in l:
             new_d = {
                 'name': d['INDEX_NAME'],
                 'unique': not d['NON_UNIQUE'],
                 'column_names': [d['COLUMN_NAME']]
             }
-            self._append_index_dict(l, new_d)
+            self._append_index_dict(merged_list, new_d)
+        return merged_list
 
 
 
@@ -561,7 +563,7 @@ class SMReflector(BaseReflector):
     def get_indexes(self, connection, table_name, schema=None, **kw):
         """
         Return information about indexes in `table_name`.
-        :param connection: ODBC cnxn
+        :param connection: SqlAlchemy Session
         :param table_name: the name of the table to extract keys from
         :param schema: schema where table is
         :returns: list of dicts with the keys:
@@ -578,8 +580,8 @@ class SMReflector(BaseReflector):
         current_schema = self.capitalize(schema or self.default_schema_name)
         table_name = self.capitalize(table_name)
         query = "CALL SYSIBM.SQLSTATISTICS(null,'{current_schema}','{table_name}', 1, 1, null)"
-        res = connection.execute(query.format(current_schema, table_name))
-        cols = [i[0] for i in res.description]
+        res = connection.execute(query.format(current_schema=current_schema, table_name=table_name))
+        cols = res.keys()
         indexes = [dict(zip(cols, i)) for i in res.fetchall()]
-        self._merge_list_of_dicts(indexes)
-        return indexes
+        merged = self._merge_list_of_dicts(indexes)
+        return merged
