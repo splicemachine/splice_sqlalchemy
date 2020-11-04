@@ -994,7 +994,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         for c in create.element.c:
             if c.primary_key and c.unique:
                 pk_name = c.name
-                regxp = re.compile(f',\s*\n.*?UNIQUE \({pk_name}\)')
+                regxp = re.compile(',\s*\n.*?UNIQUE \({pk_name}\)'.format(pk_name=pk_name))
                 out = re.sub(regxp, '', out)
                 break
         return out

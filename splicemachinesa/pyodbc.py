@@ -20,15 +20,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-HOME = os.environ.get('HOME','~') + '/splice'
-DRIVER_LOCATIONS = {
-    'Darwin': f'{HOME}/libsplice_odbc64.dylib',
-    'Linux': f'{HOME}/libsplice_odbc.so'
-}
-def splice_connect(UID, PWD, URL, PORT='1527', SSL='basic', Driver=None):
-    Driver = Driver or DRIVER_LOCATIONS[system()]
-    ODBC_CONNECTION = odbc_connect(Driver=Driver,UID=UID,PWD=PWD,URL=URL,PORT=PORT,SSL=SSL)
-    return ODBC_CONNECTION
+# HOME = os.environ.get('HOME','~') + '/splice'
+# DRIVER_LOCATIONS = {
+#     'Darwin': f'{HOME}/libsplice_odbc64.dylib',
+#     'Linux': f'{HOME}/libsplice_odbc.so'
+# }
+# def splice_connect(UID, PWD, URL, PORT='1527', SSL='basic', Driver=None):
+#     Driver = Driver or DRIVER_LOCATIONS[system()]
+#     ODBC_CONNECTION = odbc_connect(Driver=Driver,UID=UID,PWD=PWD,URL=URL,PORT=PORT,SSL=SSL)
+#     return ODBC_CONNECTION
 
 class SpliceMachineExecutionContext_pyodbc(_SelectLastRowIDMixin, SpliceMachineExecutionContext):
     pass
@@ -129,5 +129,5 @@ class SpliceMachineDialect_pyodbc(PyODBCConnector, SpliceMachineDialect):
             connectors.extend(["%s=%s" % (k, v) for k, v in keys.items()])
 
         out = [[";".join(connectors)], connect_args]
-        print(re.sub(r';PWD=\w+',';PWD=***',str(out)))
+        #print(re.sub(r';PWD=\w+',';PWD=***',str(out)))
         return out
