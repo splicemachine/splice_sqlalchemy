@@ -474,3 +474,104 @@ class SMReflector(BaseReflector):
                 fschema[r[12]]['referred_columns'].append(r[3])
         return [value for key, value in fschema.items()]
 
+    def _append_index_dict(self, l, new_dict):
+        """
+        Appends a new dictionary of index information to a list of dictionaries, creating a list of column_names for
+        matching index names.
+        ex:
+        ld = [{'name': 'SYSTABLES_INDEX1',
+               'unique': True,
+                'column_names': ['TABLENAME']
+              }]
+        new_d =  {'name': 'SYSTABLES_INDEX1',
+                  'unique': True,
+                  'column_names': ['SCHEMAID']
+                 }
+        _append_index_dict(ld, new_d) ->
+        [{'name': 'SYSTABLES_INDEX1',
+          'unique': True,
+          'column_names': ['TABLENAME', 'SCHEMAID']
+        }]
+        :param l: a list of dictionaries with keys 'name', 'unique', and 'column_names'
+        :param new_dict: dictionary with matching keys
+        :return: None, operation applied inplace
+        """
+
+
+        # Append or combine to existing list in place
+        for dct in l:
+            if new_dict['name'] == dct['name']:
+                dct['column_names'].append(new_dict['column_names'][0])
+                return
+        # Dict didn't exist in the dictionary
+        l.append(new_dict)
+
+    def _merge_list_of_dicts(self, l):
+        """
+        Merges a list of "index" dictionaries, combining column_names for matching indexes into lists
+        :param l: a list of dictionaries with keys 'INDEX_NAME', 'NON_UNIQUE', and 'COLUMN_NAME'
+        ex:
+        [{
+          'INDEX_NAME': 'SYSTABLES_INDEX1',
+          'NON_UNIQUE': False,
+          'COLUMN_NAME': 'TABLENAME'
+         },
+         {
+          'INDEX_NAME': 'SYSTABLES_INDEX1',
+          'NON_UNIQUE': False,
+          'COLUMN_NAME': 'SCHEMAID'
+         },
+         {
+          'INDEX_NAME': 'SYSTABLES_INDEX2',
+          'NON_UNIQUE': False,
+          'COLUMN_NAME': 'TABLEID'
+         }]
+         Will yield:
+         [{
+           'name': 'SYSTABLES_INDEX1',
+           'unique': True,
+           'column_names': ['TABLENAME', 'SCHEMAID']
+          },
+          {
+           'name': 'SYSTABLES_INDEX2',
+           'unique': True,
+           'column_names': ['TABLEID']
+          }]
+        :return: List of merged dictionaries
+        """
+
+        merged_list = []
+        for d in l:
+            new_d = {
+                'name': d['INDEX_NAME'],
+                'unique': not d['NON_UNIQUE'],
+                'column_names': [d['COLUMN_NAME']]
+            }
+            self._append_index_dict(merged_list, new_d)
+        return merged_list
+
+
+
+    @reflection.cache
+    def get_indexes(self, connection, table_name, schema=None, **kw):
+        """
+        Return information about indexes in `table_name`.
+        :param connection: SqlAlchemy Session
+        :param table_name: the name of the table to extract keys from
+        :param schema: schema where table is
+        :returns: list of dicts with the keys:
+        name
+          the index's name
+        column_names
+          list of column names in order
+        unique
+          boolean
+        """
+        current_schema = self.capitalize(schema or self.default_schema_name)
+        table_name = self.capitalize(table_name)
+        query = "CALL SYSIBM.SQLSTATISTICS(null,'{current_schema}','{table_name}', 1, 1, null)"
+        res = connection.execute(query.format(current_schema=current_schema, table_name=table_name))
+        cols = res.keys()
+        indexes = [dict(zip(cols, i)) for i in res.fetchall()]
+        merged = self._merge_list_of_dicts(indexes)
+        return merged
