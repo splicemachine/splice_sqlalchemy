@@ -84,7 +84,7 @@ class _SM_String(sa_types.String):
         if '_enums' in kwargs:
             kwargs.pop('_enums')
             kwargs['_expect_unicode'] = False
-        super().__init__(*args, **kwargs)
+        super(_SM_String, self).__init__(*args, **kwargs)
 
     def bind_processor(self, dialect):
         """

@@ -1,3 +1,3 @@
-from . import splice_machine, pyodbc, base
+from . import splice_machine, splice_pyodbc, base
 
 base.dialect = splice_machine.dialect

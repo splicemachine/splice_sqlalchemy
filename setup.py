@@ -23,7 +23,7 @@ limitations under the License.
 """
 
 
-VERSION = '0.2.0.27'
+VERSION = '0.2.3.27'
 ODBC_VERSION = '2.8.66.0'
 
 # def bash(command):
@@ -90,9 +90,9 @@ setup(
     packages=['splicemachinesa'],
     entry_points={
         'sqlalchemy.dialects': [
-            'splicemachinesa=splicemachinesa.pyodbc:SpliceMachineDialect_pyodbc',
+            'splicemachinesa=splicemachinesa.splice_pyodbc:SpliceMachineDialect_pyodbc',
             'splicemachinesa.splice_machine=splicemachinesa.splice_machine:SpliceMachineDialect_sm',
-            'splicemachinesa.pyodbc=splicemachinesa.pyodbc:SpliceMachineDialect_pyodbc',
+            'splicemachinesa.splice_pyodbc=splicemachinesa.splice_pyodbc:SpliceMachineDialect_pyodbc',
         ]
     },
     long_description_content_type='text/markdown',

@@ -1,7 +1,7 @@
 from sqlalchemy.dialects import registry
 
-registry.register("splicemachinesa", "splicemachinesa.pyodbc", "SpliceMachineDialect_pyodbc")
-registry.register("splicemachinesa.pyodbc", "splicemachinesa.pyodbc", "SpliceMachineDialect_pyodbc")
+registry.register("splicemachinesa", "splicemachinesa.splice_pyodbc", "SpliceMachineDialect_pyodbc")
+registry.register("splicemachinesa.splice_pyodbc", "splicemachinesa.splice_pyodbc", "SpliceMachineDialect_pyodbc")
 
 from sqlalchemy.testing.plugin.pytestplugin import *
 
