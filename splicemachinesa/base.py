@@ -12,8 +12,8 @@ from sqlalchemy.sql import operators, compiler
 from sqlalchemy.types import BLOB, CHAR, CLOB, DATE, DATETIME, INTEGER, \
     SMALLINT, BIGINT, DECIMAL, NUMERIC, REAL, TIME, TIMESTAMP, \
     VARCHAR, FLOAT, TEXT, INT
+from sqlalchemy.sql.elements import TextClause
 from enum import Enum as PyEnum
-
 from . import constants
 from . import reflection as sm_reflection
 
@@ -254,6 +254,8 @@ class TypeRegexes:
     # string types
     STR_RX = re.compile('|'.join(['BLOB', 'CLOB', 'CHAR', 'CHARACTER', 'DATE', 'DATETIME',
                                   'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
+    # function types
+    FUNC_RX = re.compile('|'.join(['text']))
 
 
 class QuotationUtilities:
@@ -859,6 +861,11 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
         """
         output = compiler.DDLCompiler.get_column_default_string(self, column, **kw)
         if output:
+            # We were double quoting things inside a "text()" literal argument, so we need to not do that. We can
+            # check for a text literal within the server_default.arg param
+            server_default = getattr(column, 'server_default')
+            if server_default and type(getattr(server_default, 'arg')) == TextClause: # check for text literal
+                return output
             return QuotationUtilities.get_default_type_converter(str(column.type))(output)
 
     def get_column_specification(self, column, **kw):
@@ -878,6 +885,7 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
 
         # default clause
         default = self.get_column_default_string(column)
+
         if default is not None:
             col_spec.append('WITH DEFAULT')
             col_spec.append(default)
