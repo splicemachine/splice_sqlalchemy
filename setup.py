@@ -23,22 +23,23 @@ limitations under the License.
 """
 
 
-VERSION = '0.3.0'
-ODBC_VERSION = '2.8.66.0'
+VERSION = '0.3.2'
+ODBC_VERSION = '2.8.71.0'
 
 def bash(command):
     run_bash(command.split())
 
 class CustomInstall(Install):
-    linux_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/Linux64/splice_odbc_linux64-2.8.66.0.tar.gz'
-    window_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/Win64/splice_odbc_setup_64bit_2.8.66.0.msi'
-    mac_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-2.8.66.0.tar.gz'
+    linux_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/Linux64/splice_odbc_linux64-{}.tar.gz'.format(ODBC_VERSION)
+    window_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/Win64/splice_odbc_setup_64bit_{}.msi'.format(ODBC_VERSION)
+    mac_url = 'https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-{}.tar.gz'.format(ODBC_VERSION)
     nix_url = {'Darwin': mac_url, 'Linux': linux_url}
     def nix_hanlder(self):
         home = os.environ.get('HOME', '~') + '/splice'
         url = CustomInstall.nix_url[system()]
         file_name = url.split('/')[-1]
         bash('mkdir -p /tmp')
+        bash('mkdir -p {}'.format(home))
         bash('curl -kLs {url} -o /tmp/{file_name}'.format(url=url,file_name=file_name))
         bash('tar -xzf /tmp/{} -C /tmp'.format(file_name))
         driver_name = 'libsplice_odbc64.dylib' if system()=='Darwin' else 'lib64/libsplice_odbc.so'
