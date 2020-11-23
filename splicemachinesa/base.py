@@ -254,8 +254,6 @@ class TypeRegexes:
     # string types
     STR_RX = re.compile('|'.join(['BLOB', 'CLOB', 'CHAR', 'CHARACTER', 'DATE', 'DATETIME',
                                   'TIME', 'TIMESTAMP', 'VARCHAR', 'LONGVARCHAR']))
-    # function types
-    FUNC_RX = re.compile('|'.join(['text']))
 
 
 class QuotationUtilities:
@@ -885,7 +883,6 @@ class SpliceMachineDDLCompiler(compiler.DDLCompiler):
 
         # default clause
         default = self.get_column_default_string(column)
-
         if default is not None:
             col_spec.append('WITH DEFAULT')
             col_spec.append(default)
