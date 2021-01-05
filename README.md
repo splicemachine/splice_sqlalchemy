@@ -12,7 +12,8 @@ There are two ways to install this Driver. With and without ODBC Driver custom i
 
 ### Without ODBC Driver Custom Installation
 #### Mac
-`sudo pip install splicemachinesa`
+`brew install unixodbc`
+`pip install splicemachinesa`
 #### Linux
 First ensure you have the following packages installed. They are necessary for pyodbc.<br>
 Ubuntu:
@@ -39,14 +40,14 @@ Centos:
 
 `sudo yum -y update && sudo yum -y install unzip gcc openssl-devel gcc-c++ unixODBC-devel unixODBC python3-devel`
 
-Then run `sudo pip install splicemachinesa`
+Then run `pip install splicemachinesa`
 <br>
 
 **Note:** If you have an error during installation, it is likely with the installation of PyODBC. When searching the error, reference PyODBC in the search.
 
 ### With Custom ODBC Driver Installation
 #### ODBC Driver:
-First, download the appropriate Splice Machine ODBC driver for your system.
+First, download the appropriate [Splice Machine ODBC](https://doc.splicemachine.com/tutorials_connect_odbcinstall.html) driver for your system.
 <hr><br>
 Mac OSX 64 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-2.7.60.0.tar.gz">Download</a><br>
 Linux 32 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/Linux32/splice_odbc_linux32-2.7.58.0.tar.gz">Download</a><br>
@@ -59,7 +60,7 @@ Then, follow the instructions <a href="https://doc.splicemachine.com/tutorials_c
 Once the Driver is installed, you can pip install splicemachinesa
 
 ```
-sudo pip install splicemachinesa
+pip install splicemachinesa
 ```
 
 ### Usage
@@ -69,9 +70,9 @@ You can use this package for SqlAlchemy usage or raw ODBC usage
 #### ODBC Connection Only
 ```
 from splicemachinesa.pyodbc import splice_connect
-ODBC_CONNECTION = splice_connect(UID=[UID], PWD=[PWD], URL=[URL])
+ODBC_CONNECTION = splice_connect(UID=[UID], PWD=[PWD], URL=[URL], SSL=[SSL])
 ```
-Filling in `UID`, `PWD` and `URL` with the proper values for your database
+Filling in `UID`, `PWD`, `URL`, and `SSL` with the proper values for your database. SSL defaults to 'basic' If you are connecting to the Splice Database _inside_ the same network (ie standalone splice) you will set `SSL=None`
 
 #### SqlAlchemy
 
@@ -95,21 +96,37 @@ engine = create_engine(url)
 #### 2. Custom Configuration Without Driver
 Format: `splicemachinesa://?DRIVER=[driver]&URL=[URL]&PORT=[PORT]&UID=[USER]&PWD=[PASSWORD]`
 <br><br>You can use this SQLAlchemy driver without an ODBC configuration (meaning running the installation from Splice Machine docs)
-by manually specifying the driver path. On OSX (given installation with `sudo` ), this is found in `/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib.`
-Without `sudo` this located at the same path, but in the home directory e.g. `$HOME/Library/...`
-On Linux (given ODBC Driver installation with `sudo`), this is found in `/usr/local/splice/libsplice_odbc.so`. Without `sudo`
-it is found in `$HOME/splice`. We provide a utility function for simplifying the URL building process. <br>
+by manually specifying the driver path.
+
+* On OSX (given installation with `sudo` ), the Driver is found in `/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib`
+* On OSX, Without `sudo` this driver is located at `$HOME/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib`
+* On Linux (given ODBC Driver installation with `sudo`), this is found in `/usr/local/splice/libsplice_odbc.so`
+* Without `sudo` it is found in `$HOME/splice`.
+
+<br>
+We provide a utility function for simplifying the URL building process. <br>
 This method is easier for an automated driver configuration (e.g. inside Docker) because you only need
 to copy to Driver binary. <br><br>Note: Error messages will not be rendered properly with this approach.
 
 
-Example:
+Example Linux:
 ```
 from sqlalchemy import create_engine
 from splicemachinesa.utilities import url_builder
 
-url = url_builder('/usr/local/splice/lib/libsplice_odbc.so', host=[0.0.0.0], port=[1527]
- user=['splice'], password=['admin'])
+url = url_builder('/usr/local/splice/lib/libsplice_odbc.so', host='localhost', port=1527,
+user='splice', password='admin')
+ 
+engine = create_engine(url) 
+```
+
+Example Mac:
+```
+from sqlalchemy import create_engine
+from splicemachinesa.utilities import url_builder
+
+url = url_builder('/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib', host='localhost', port=1527, 
+user='splice', password='admin')
  
 engine = create_engine(url) 
 ```
