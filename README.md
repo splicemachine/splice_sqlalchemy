@@ -50,7 +50,6 @@ Then run `pip install splicemachinesa`
 First, download the appropriate [Splice Machine ODBC](https://doc.splicemachine.com/tutorials_connect_odbcinstall.html) driver for your system.
 <hr><br>
 Mac OSX 64 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/MacOSX64/splice_odbc_macosx64-2.8.66.0.tar.gz">Download</a><br>
-Linux 32 bit Driver (Note this is deprecated): <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/Linux32/splice_odbc_linux32-2.7.60.0.tar.gz">Download</a><br>
 Linux 64 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driver/Linux64/splice_odbc_linux64-2.8.66.0.tar.gz">Download</a><br>
 <br><b>Note: Windows is not currently supported for Splice Machine SQLAlchemy ODBC</b><br>
 <hr><br>
