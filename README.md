@@ -100,7 +100,7 @@ by manually specifying the driver path.
 * On OSX (given installation with `sudo` ), the Driver is found in `/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib`
 * On OSX, Without `sudo` this driver is located at `$HOME/Library/ODBC/SpliceMachine/libsplice_odbc64.dylib`
 * On Linux (given ODBC Driver installation with `sudo`), this is found in `/usr/local/splice/libsplice_odbc.so`
-* Without `sudo` it is found in `$HOME/splice`.
+* On Linux, Without `sudo` it is found in `$HOME/splice`.
 
 <br>
 We provide a utility function for simplifying the URL building process. <br>
