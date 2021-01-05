@@ -58,7 +58,7 @@ Then, follow the instructions <a href="https://doc.splicemachine.com/tutorials_c
 
 Once the Driver is installed, you can pip install splicemachinesa.
 
-<b>NOTE: If you are on mac, you must install unixODBC</b><br>
+<b>NOTE: If you are on Mac, you must install unixODBC</b><br>
 `brew install unixodbc`
 
 ```
