@@ -56,7 +56,10 @@ Linux 64 bit Driver: <a href="https://splice-releases.s3.amazonaws.com/odbc-driv
 Then, follow the instructions <a href="https://doc.splicemachine.com/tutorials_connect_odbcinstall.html">here</a> to finish the installation, but use the download links above to retrieve the Driver tarball
 <br><hr>
 
-Once the Driver is installed, you can pip install splicemachinesa
+Once the Driver is installed, you can pip install splicemachinesa.
+
+NOTE: If you are on mac, you must install unixODBC
+`brew install unixodbc`
 
 ```
 pip install splicemachinesa
