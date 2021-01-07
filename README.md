@@ -147,7 +147,7 @@ string for accessing it
 cd /path/to/splice_sqlalchemy
 sudo pip install .
 sudo pip install pytest
-py.test -vv --db-url 'splicemachinesa://[...]'
+pytest -vv --db-url 'splicemachinesa://[...]'
 ```
 
 #### Features not yet supported
