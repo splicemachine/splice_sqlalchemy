@@ -199,7 +199,6 @@ class _SM_Date(sa_types.Date):
 colspecs = {
     sa_types.Boolean: _SM_Boolean,
     sa_types.Date: _SM_Date,
-    sa_types.DateTime: _SM_Date,
     sa_types.Integer: _SM_Integer,
     sa_types.String: _SM_String
 }
