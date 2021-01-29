@@ -1129,7 +1129,7 @@ class SpliceMachineDialect(default.DefaultDialect):
     postfetch_lastrowid = True
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = True
-    supports_native_decimal = False
+    supports_native_decimal = True
     supports_native_boolean = True
     preexecute_sequences = False
     supports_alter = True
