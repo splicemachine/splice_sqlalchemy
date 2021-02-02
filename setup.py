@@ -27,7 +27,7 @@ and are licensed to you under the GNU Affero General Public License.
 """
 
 
-VERSION = '0.3.4'
+VERSION = '0.3.5'
 ODBC_VERSION = '2.8.73.0'
 
 def bash(command):

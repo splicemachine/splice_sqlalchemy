@@ -203,7 +203,8 @@ ischema_names = {
     'TIMESTAMP': TIMESTAMP,
     'VARCHAR': VARCHAR,
     'LONGVARCHAR': LONGVARCHAR,
-    'TEXT': TEXT
+    'TEXT': TEXT,
+    'TINYINT':SMALLINT
 }
 
 
