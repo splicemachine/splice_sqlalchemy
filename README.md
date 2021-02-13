@@ -1,5 +1,7 @@
 # Splice Machine SQLAlchemy Adapter
+
 [![PyPI version](https://badge.fury.io/py/splicemachinesa.svg)](https://badge.fury.io/py/splicemachinesa)
+
 ## Description:
 * This python package allows users to integrate new and existing 
 SQLAlchemy applications with Splice Machine
