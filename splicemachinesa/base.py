@@ -76,6 +76,45 @@ class _SM_Integer(sa_types.Integer):
 
         return process
 
+class _SM_Boolean(sa_types.Boolean):
+    """
+    An overrided boolean class specifically
+    for Splice Machine that converts Boolean
+    SQLAlchemy types into SMALLINT (0/1) values. This is because SpliceDB doesn't support using 0 and 1
+    as true/false, which sqlalchemy generates for boolean types.
+    """
+
+    def result_processor(self, dialect, coltype):
+        """
+        Return a conversion function for
+        processing row values
+        :param dialect: the current dialect in use
+        :param coltype: the column type in DB Schema
+            from pyODBC.connection.cursor.description
+        :returns: func for parsing boolean value of integer
+        """
+
+        def process(value):
+            if value is None:  # null
+                return None
+            else:  # bool(0) -> false, bool(1) -> true
+                return bool(value)
+
+        return process
+
+    def bind_processor(self, dialect):
+        """
+        Return a conversion function for processing bind values
+        (when sending, rather than receiving)
+        :param dialect: the current dialect in use
+        :returns: func for getting
+            integer value from boolean specified
+        """
+
+        def process(value):
+            return None if value is None else int(bool(value))
+
+        return process
 
 class _SM_String(sa_types.String):
     """
@@ -164,7 +203,8 @@ class _SM_Date(sa_types.Date):
 colspecs = {
     sa_types.Date: _SM_Date,
     sa_types.Integer: _SM_Integer,
-    sa_types.String: _SM_String
+    sa_types.String: _SM_String,
+    sa_types.Boolean: _SM_Boolean
 }
 
 
@@ -511,7 +551,7 @@ class SpliceMachineTypeCompiler(compiler.GenericTypeCompiler):
             specified by the user
         :returns: data type rendering
         """
-        return self.visit_BOOLEAN(type_)
+        return self.visit_SMALLINT(type_)
 
     def visit_float(self, type_):
         """
@@ -1137,7 +1177,7 @@ class SpliceMachineDialect(default.DefaultDialect):
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = True
     supports_native_decimal = True
-    supports_native_boolean = True
+    supports_native_boolean = False
     preexecute_sequences = False
     supports_alter = True
     supports_sequences = True
