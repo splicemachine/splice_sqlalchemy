@@ -204,7 +204,7 @@ class SMReflector(BaseReflector):
 
         query = """
         SELECT TABLENAME FROM {systable}
-        WHERE TABLETYPE='T' AND 
+        WHERE (TABLETYPE='T' OR TABLE_TYPE='E') AND 
         SCHEMAID='{schemaid}'
         """.format(systable=self.capitalize(self.SYS_TABLE), schemaid=schema_id)
 
