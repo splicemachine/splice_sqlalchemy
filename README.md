@@ -79,7 +79,6 @@ ODBC_CONNECTION = splice_connect(URL=[URL], UID=[UID], PWD=[PWD], SSL=[SSL])
 ```
 Filling in `UID`, `PWD`, `URL`, and `SSL` with the proper values for your database. SSL defaults to 'basic' If you are connecting to the Splice Database _inside_ the same network (ie standalone splice) you will set `SSL=None`
 
-
 #### ODBC Connection Only (JWT Connection)
 ```
 from splicemachinesa.pyodbc import splice_connect
