@@ -52,7 +52,7 @@ def splice_connect(URL,
     :param PORT: The datbase port [default 1527]
     :param SSL: The SSL level [default basic]
     :param Driver: The driver [if not provided, will use the one downloaded upon installation of splicemachinesa]
-    :return:
+    :return: ODBC Connection
     """
     Driver = Driver or DRIVER_LOCATIONS[system()]
     kwargs = dict(
