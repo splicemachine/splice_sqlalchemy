@@ -72,12 +72,21 @@ pip install splicemachinesa
 
 You can use this package for SqlAlchemy usage or raw ODBC usage
 
-#### ODBC Connection Only
+#### ODBC Connection Only (Basic Auth)
 ```
 from splicemachinesa.pyodbc import splice_connect
-ODBC_CONNECTION = splice_connect(UID=[UID], PWD=[PWD], URL=[URL], SSL=[SSL])
+ODBC_CONNECTION = splice_connect(URL=[URL], UID=[UID], PWD=[PWD], SSL=[SSL])
 ```
 Filling in `UID`, `PWD`, `URL`, and `SSL` with the proper values for your database. SSL defaults to 'basic' If you are connecting to the Splice Database _inside_ the same network (ie standalone splice) you will set `SSL=None`
+
+#### ODBC Connection Only (JWT Connection)
+```
+from splicemachinesa.pyodbc import splice_connect
+ODBC_CONNECTION = splice_connect(URL=[URL], JWT_TOKEN=[JWT_TOKEN], JWT_TYPE=[JWT_TYPE], SSL=[SSL])
+```
+Filling in `JWT_TOKEN`, `JWT_TYPE`, `URL`, and `SSL` with the proper values for your database. SSL defaults to 'basic' If you are connecting to the Splice Database _inside_ the same network (ie standalone splice) you will set `SSL=None`<br>
+You must set the JWT_TYPE to use this format. Available options are ('SPLICE_JWT', 'SPLICE_JWT_PUB', 'OKTA_OAUTH', 'SPLICE_OAUTH')
+
 
 #### SqlAlchemy
 

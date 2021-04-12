@@ -32,9 +32,43 @@ DRIVER_LOCATIONS = {
     'Darwin': f'{HOME}/libsplice_odbc64.dylib',
     'Linux': f'{HOME}/libsplice_odbc.so'
 }
-def splice_connect(UID, PWD, URL, PORT='1527', SSL='basic', Driver=None):
+def splice_connect(URL,
+                   UID=None, PWD=None,
+                   JWT_TOKEN=None, JWT_TYPE=None,
+                   PORT='1527', SSL='basic', Driver=None):
+    """
+    A function that returns a raw ODBC connection to the provided Splice Database. This can be used with either basic
+    auth or JWT authentication.
+    NOTE: If a JWT_TOKEN and JWT_TYPE are provided, the JWT authentication will take precedence.
+
+    To connect with basic auth you must set BOTH UID and PWD
+    To connect with JWT, you must set BOTH JWT_TOKEN and JWT_TYPE. Valid JWT_TYPEs are (SPLICE_JWT,SPLICE_JWT_PUB,OKTA_OAUTH,SPLICE_OAUTH)
+
+    :param URL: The database JDBC Host
+    :param UID: The User ID (if using basic auth)
+    :param PWD: The User Password (if using basic auth)
+    :param JWT_TOKEN: The JWT Token (if using JWT authentication)
+    :param JWT_TYPE: The JWT Type (if using JWT authentication). Valid options are (SPLICE_JWT,SPLICE_JWT_PUB,OKTA_OAUTH,SPLICE_OAUTH)
+    :param PORT: The datbase port [default 1527]
+    :param SSL: The SSL level [default basic]
+    :param Driver: The driver [if not provided, will use the one downloaded upon installation of splicemachinesa]
+    :return: ODBC Connection
+    """
     Driver = Driver or DRIVER_LOCATIONS[system()]
-    ODBC_CONNECTION = odbc_connect(Driver=Driver,UID=UID,PWD=PWD,URL=URL,PORT=PORT,SSL=SSL)
+    kwargs = dict(
+        Driver=Driver,
+        URL=URL,
+        UID=UID,PWD=PWD,
+        PORT=PORT,SSL=SSL
+    )
+    if JWT_TOKEN and not JWT_TYPE:
+        raise Exception('You cannot set JWT_TOKEN without setting a valid JWT_TYPE. Valid types are '
+                        '(SPLICE_JWT,SPLICE_JWT_PUB,OKTA_OAUTH,SPLICE_OAUTH)')
+    if JWT_TOKEN and JWT_TYPE:
+        kwargs['JWT_TOKEN'] = JWT_TOKEN
+        kwargs['JWT_TYPE'] = JWT_TYPE
+
+    ODBC_CONNECTION = odbc_connect(**kwargs)
     return ODBC_CONNECTION
 
 class SpliceMachineExecutionContext_pyodbc(_SelectLastRowIDMixin, SpliceMachineExecutionContext):
