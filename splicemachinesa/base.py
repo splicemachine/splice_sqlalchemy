@@ -658,7 +658,6 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param select: the select query class
         :returns: clause for limit
         """
-        print(f'\n\nINFO: {select.__dict__}\n\n')
         text = ''
         if select._offset_clause is not None:
             text += ' OFFSET %s ROWS' % select._offset
