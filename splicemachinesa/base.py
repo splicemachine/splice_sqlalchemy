@@ -658,10 +658,12 @@ class SpliceMachineCompiler(compiler.SQLCompiler):
         :param select: the select query class
         :returns: clause for limit
         """
-        if (select._limit is not None) and (select._offset is None):
-            return " FETCH FIRST %s ROWS ONLY" % select._limit  # get fetch first
-        else:
-            return ""
+        text = ''
+        if select._offset_clause is not None:
+            text += ' OFFSET %s ROWS' % select._offset
+        if select._limit_clause is not None:
+            text += " FETCH FIRST %s ROWS ONLY" % select._limit  # get fetch first
+        return text
 
     def visit_select(self, select, **kwargs):
         """
